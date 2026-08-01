@@ -13,8 +13,13 @@ namespace NzbDrone.Core.MetadataSource.Providers
     /// Audiobookshelf custom provider specification.
     /// GET /search?query=...&amp;author=... with optional AUTHORIZATION header.
     /// Response: { "matches": [ BookMetadata, ... ] }
+    ///
+    /// IMPORTANT: This class intentionally does NOT implement IMetadataProvider
+    /// to prevent DryIoc from auto-registering it (its constructor takes runtime
+    /// string parameters that DI cannot resolve). MetadataProviderService wraps
+    /// instances in CustomMetadataProviderAdapter to satisfy IMetadataProvider.
     /// </summary>
-    public class CustomMetadataProvider : IMetadataProvider
+    public class CustomMetadataProvider
     {
         private readonly IHttpClient _httpClient;
         private readonly Logger _logger;
