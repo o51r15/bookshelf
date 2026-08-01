@@ -414,7 +414,7 @@ class MetadataSettings extends Component {
                 type="text"
                 value={(provider.settings && provider.settings.apiKey) || ''}
                 onChange={(e) => this.onProviderSettingChange(provider.key, 'apiKey', e.target.value)}
-                placeholder="Optional - get free key at console.cloud.google.com"
+                placeholder="Required - get free key at console.cloud.google.com"
                 style={{
                   padding: '4px 8px',
                   border: '1px solid var(--borderColor)',
@@ -425,7 +425,7 @@ class MetadataSettings extends Component {
                 }}
               />
               <span style={{ fontSize: '11px', marginLeft: '8px', color: 'var(--disabledColor)' }}>
-                Required for reliable access. Free tier: 1,000 req/day.
+                Required. Free tier: 1,000 req/day at console.cloud.google.com.
               </span>
             </div>
           }
