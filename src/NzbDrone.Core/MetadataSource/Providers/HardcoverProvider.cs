@@ -7,6 +7,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using NLog;
 using NzbDrone.Common.Http;
+using NzbDrone.Core.Configuration;
 
 namespace NzbDrone.Core.MetadataSource.Providers
 {
