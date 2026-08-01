@@ -1050,7 +1050,8 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
                 TitleSlug = foreignId.Replace(":", "-"),
                 Status = AuthorStatusType.Continuing,
                 Overview = result.Description ?? string.Empty,
-                Images = new List<MediaCover.MediaCover>()
+                Images = new List<MediaCover.MediaCover>(),
+                Links = new List<Links> { new Links { Url = $"https://www.google.com/search?q={Uri.EscapeDataString(name)}", Name = "Google" } }
             };
 
             if (!string.IsNullOrWhiteSpace(result.CoverUrl))
@@ -1084,7 +1085,8 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
                 SortName = authorName,
                 TitleSlug = authorForeignId.Replace(":", "-"),
                 Status = AuthorStatusType.Continuing,
-                Images = new List<MediaCover.MediaCover>()
+                Images = new List<MediaCover.MediaCover>(),
+                Links = new List<Links> { new Links { Url = $"https://www.google.com/search?q={Uri.EscapeDataString(authorName)}", Name = "Google" } }
             };
 
             var author = new Author
@@ -1117,11 +1119,13 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
                 });
             }
 
+            var bookTitle = result.Title ?? "Unknown";
             var book = new Book
             {
                 ForeignBookId = foreignId,
-                Title = result.Title ?? "Unknown",
-                CleanTitle = Parser.Parser.CleanAuthorName(result.Title ?? "Unknown"),
+                Title = bookTitle,
+                CleanTitle = Parser.Parser.CleanAuthorName(bookTitle),
+                Links = new List<Links> { new Links { Url = $"https://www.google.com/search?q={Uri.EscapeDataString(bookTitle + " " + authorName)}", Name = "Google" } },
                 Author = new LazyLoaded<Author>(author),
                 AuthorMetadata = new LazyLoaded<AuthorMetadata>(authorMetadata),
                 Editions = new LazyLoaded<List<Edition>>(new List<Edition> { edition })
