@@ -318,8 +318,9 @@ namespace NzbDrone.Core.Configuration
             {
                 new MetadataProviderConfig { Key = "googlebooks", Enabled = true, Priority = 0 },
                 new MetadataProviderConfig { Key = "openlibrary", Enabled = true, Priority = 1 },
-                new MetadataProviderConfig { Key = "hardcover", Enabled = false, Priority = 2 },
-                new MetadataProviderConfig { Key = "rreadingglasses", Enabled = false, Priority = 3 }
+                new MetadataProviderConfig { Key = "audible", Enabled = false, Priority = 2 },
+                new MetadataProviderConfig { Key = "hardcover", Enabled = false, Priority = 3 },
+                new MetadataProviderConfig { Key = "rreadingglasses", Enabled = false, Priority = 4 }
             };
         }
 

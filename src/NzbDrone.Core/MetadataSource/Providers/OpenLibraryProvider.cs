@@ -357,8 +357,12 @@ namespace NzbDrone.Core.MetadataSource.Providers
         {
             try
             {
-                var results = SearchInternal("search.json?q=test&limit=1");
-                return results.Any();
+                // Just verify the API is reachable and responds with 200.
+                // Empty results still mean the service is working.
+                var request = BuildRequest("search.json?q=test&limit=1");
+                var response = _httpClient.Get(request);
+                return response.StatusCode == HttpStatusCode.OK ||
+                       response.StatusCode == HttpStatusCode.TooManyRequests;
             }
             catch
             {

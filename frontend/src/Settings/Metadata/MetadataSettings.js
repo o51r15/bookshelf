@@ -372,6 +372,39 @@ class MetadataSettings extends Component {
             </div>
           }
 
+          {provider.key === 'audible' && provider.enabled && !provider.isCustom &&
+            <div style={{ marginTop: '5px' }}>
+              <label style={{ fontSize: '12px', marginRight: '5px' }}>
+                Region:
+              </label>
+              <select
+                value={(provider.settings && provider.settings.region) || 'us'}
+                onChange={(e) => this.onProviderSettingChange(provider.key, 'region', e.target.value)}
+                style={{
+                  padding: '4px 8px',
+                  border: '1px solid var(--borderColor)',
+                  borderRadius: '3px',
+                  backgroundColor: 'var(--inputBackgroundColor)',
+                  color: 'var(--textColor)'
+                }}
+              >
+                <option value="us">United States (.com)</option>
+                <option value="uk">United Kingdom (.co.uk)</option>
+                <option value="ca">Canada (.ca)</option>
+                <option value="au">Australia (.com.au)</option>
+                <option value="de">Germany (.de)</option>
+                <option value="fr">France (.fr)</option>
+                <option value="it">Italy (.it)</option>
+                <option value="es">Spain (.es)</option>
+                <option value="jp">Japan (.co.jp)</option>
+                <option value="in">India (.in)</option>
+              </select>
+              <span style={{ fontSize: '11px', marginLeft: '8px', color: 'var(--disabledColor)' }}>
+                Searches Audible catalog + Audnexus for rich metadata. No API key needed.
+              </span>
+            </div>
+          }
+
           {provider.key === 'googlebooks' && provider.enabled && !provider.isCustom &&
             <div style={{ marginTop: '5px' }}>
               <label style={{ fontSize: '12px', marginRight: '5px' }}>
