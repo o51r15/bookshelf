@@ -372,6 +372,31 @@ class MetadataSettings extends Component {
             </div>
           }
 
+          {provider.key === 'googlebooks' && provider.enabled && !provider.isCustom &&
+            <div style={{ marginTop: '5px' }}>
+              <label style={{ fontSize: '12px', marginRight: '5px' }}>
+                API Key:
+              </label>
+              <input
+                type="text"
+                value={(provider.settings && provider.settings.apiKey) || ''}
+                onChange={(e) => this.onProviderSettingChange(provider.key, 'apiKey', e.target.value)}
+                placeholder="Optional - get free key at console.cloud.google.com"
+                style={{
+                  padding: '4px 8px',
+                  border: '1px solid var(--borderColor)',
+                  borderRadius: '3px',
+                  width: '350px',
+                  backgroundColor: 'var(--inputBackgroundColor)',
+                  color: 'var(--textColor)'
+                }}
+              />
+              <span style={{ fontSize: '11px', marginLeft: '8px', color: 'var(--disabledColor)' }}>
+                Required for reliable access. Free tier: 1,000 req/day.
+              </span>
+            </div>
+          }
+
           {provider.key === 'hardcover' && provider.enabled && !provider.isCustom &&
             <div style={{ marginTop: '5px' }}>
               <label style={{ fontSize: '12px', marginRight: '5px' }}>
@@ -403,7 +428,7 @@ class MetadataSettings extends Component {
                 type="text"
                 value={(provider.settings && provider.settings.baseUrl) || ''}
                 onChange={(e) => this.onProviderSettingChange(provider.key, 'baseUrl', e.target.value)}
-                placeholder="https://api.bookinfo.pro (default)"
+                placeholder="Default: https://api.bookinfo.pro"
                 style={{
                   padding: '4px 8px',
                   border: '1px solid var(--borderColor)',
@@ -413,6 +438,9 @@ class MetadataSettings extends Component {
                   color: 'var(--textColor)'
                 }}
               />
+              <div style={{ fontSize: '11px', marginTop: '3px', color: 'var(--disabledColor)' }}>
+                Uses api.bookinfo.pro by default. Set a URL here to use a self-hosted instance instead.
+              </div>
             </div>
           }
         </div>

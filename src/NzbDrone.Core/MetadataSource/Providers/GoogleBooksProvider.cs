@@ -5,6 +5,7 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 using NLog;
 using NzbDrone.Common.Http;
+using NzbDrone.Core.Configuration;
 
 namespace NzbDrone.Core.MetadataSource.Providers
 {
@@ -15,15 +16,17 @@ namespace NzbDrone.Core.MetadataSource.Providers
         private const int TimeoutSeconds = 10;
 
         private readonly IHttpClient _httpClient;
+        private readonly IConfigService _configService;
         private readonly Logger _logger;
 
         public string Key => "googlebooks";
         public string DisplayName => "Google Books";
         public bool RequiresAuth => false;
 
-        public GoogleBooksProvider(IHttpClient httpClient, Logger logger)
+        public GoogleBooksProvider(IHttpClient httpClient, IConfigService configService, Logger logger)
         {
             _httpClient = httpClient;
+            _configService = configService;
             _logger = logger;
         }
 
@@ -309,13 +312,38 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         private HttpRequest BuildRequest(string path)
         {
-            var request = new HttpRequest($"{BaseUrl}/{path}")
+            var url = $"{BaseUrl}/{path}";
+
+            // Append Google Books API key if configured
+            var apiKey = GetApiKey();
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                url += (url.Contains("?") ? "&" : "?") + $"key={Uri.EscapeDataString(apiKey)}";
+            }
+
+            var request = new HttpRequest(url)
             {
                 AllowAutoRedirect = true,
                 RequestTimeout = TimeSpan.FromSeconds(TimeoutSeconds)
             };
             request.Headers.Accept = "application/json";
             return request;
+        }
+
+        private string GetApiKey()
+        {
+            var configs = _configService.GetMetadataProviderConfigs();
+            var config = configs.FirstOrDefault(c =>
+                c.Key.Equals(Key, StringComparison.OrdinalIgnoreCase));
+
+            if (config?.Settings != null &&
+                config.Settings.TryGetValue("apiKey", out var key) &&
+                !string.IsNullOrWhiteSpace(key))
+            {
+                return key;
+            }
+
+            return null;
         }
 
         private static string ToSortName(string name)
