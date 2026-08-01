@@ -27,6 +27,27 @@ namespace NzbDrone.Core.MetadataSource.Providers
         /// Provider-specific settings (API keys, base URLs, etc.).
         /// </summary>
         public Dictionary<string, string> Settings { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Whether this is a user-added custom provider (ABS-compatible).
+        /// </summary>
+        public bool IsCustom { get; set; }
+
+        /// <summary>
+        /// Display name for custom providers.
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Base URL for custom providers (e.g. "https://my-provider.example.com").
+        /// </summary>
+        public string Url { get; set; }
+
+        /// <summary>
+        /// Optional authorization token for custom providers.
+        /// Sent as the AUTHORIZATION header value.
+        /// </summary>
+        public string AuthToken { get; set; }
     }
 
     /// <summary>

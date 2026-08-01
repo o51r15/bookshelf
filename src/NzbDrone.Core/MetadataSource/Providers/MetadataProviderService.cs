@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
+using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
 
 namespace NzbDrone.Core.MetadataSource.Providers
@@ -36,15 +37,18 @@ namespace NzbDrone.Core.MetadataSource.Providers
     {
         private readonly IEnumerable<IMetadataProvider> _providers;
         private readonly IConfigService _configService;
+        private readonly IHttpClient _httpClient;
         private readonly Logger _logger;
 
         public MetadataProviderService(
             IEnumerable<IMetadataProvider> providers,
             IConfigService configService,
+            IHttpClient httpClient,
             Logger logger)
         {
             _providers = providers;
             _configService = configService;
+            _httpClient = httpClient;
             _logger = logger;
         }
 
@@ -86,6 +90,19 @@ namespace NzbDrone.Core.MetadataSource.Providers
         {
             var provider = _providers.FirstOrDefault(p =>
                 p.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+
+            // If not a built-in provider, check for custom provider
+            if (provider == null)
+            {
+                var config = _configService.GetMetadataProviderConfigs()
+                    .FirstOrDefault(c => c.IsCustom && c.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+
+                if (config != null)
+                {
+                    provider = new CustomMetadataProvider(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
+                }
+            }
 
             if (provider == null)
             {
@@ -206,8 +223,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
         public MetadataAuthorResult GetAuthorInfo(string providerKey, string foreignId)
         {
             // Try the specified provider first
-            var provider = _providers.FirstOrDefault(p =>
-                p.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+            var provider = ResolveProvider(providerKey);
 
             if (provider != null)
             {
@@ -247,8 +263,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         public MetadataBookResult GetBookInfo(string providerKey, string foreignId)
         {
-            var provider = _providers.FirstOrDefault(p =>
-                p.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+            var provider = ResolveProvider(providerKey);
 
             if (provider != null)
             {
@@ -333,6 +348,26 @@ namespace NzbDrone.Core.MetadataSource.Providers
             return allResults;
         }
 
+        private IMetadataProvider ResolveProvider(string providerKey)
+        {
+            var provider = _providers.FirstOrDefault(p =>
+                p.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+
+            if (provider == null)
+            {
+                var config = _configService.GetMetadataProviderConfigs()
+                    .FirstOrDefault(c => c.IsCustom && c.Key.Equals(providerKey, StringComparison.OrdinalIgnoreCase));
+
+                if (config != null)
+                {
+                    provider = new CustomMetadataProvider(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
+                }
+            }
+
+            return provider;
+        }
+
         private IEnumerable<IMetadataProvider> GetEnabledProviders()
         {
             var configs = GetProviderConfigs()
@@ -342,12 +377,20 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
             foreach (var config in configs)
             {
-                var provider = _providers.FirstOrDefault(p =>
-                    p.Key.Equals(config.Key, StringComparison.OrdinalIgnoreCase));
-
-                if (provider != null)
+                if (config.IsCustom)
                 {
-                    yield return provider;
+                    yield return new CustomMetadataProvider(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
+                }
+                else
+                {
+                    var provider = _providers.FirstOrDefault(p =>
+                        p.Key.Equals(config.Key, StringComparison.OrdinalIgnoreCase));
+
+                    if (provider != null)
+                    {
+                        yield return provider;
+                    }
                 }
             }
         }

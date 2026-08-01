@@ -30,7 +30,11 @@ class MetadataSettings extends Component {
       providersFetched: false,
       providersFetching: false,
       testingProvider: null,
-      testResults: {}
+      testResults: {},
+      showAddCustom: false,
+      newCustomName: '',
+      newCustomUrl: '',
+      newCustomAuthToken: ''
     };
   }
 
@@ -104,6 +108,68 @@ class MetadataSettings extends Component {
       return {
         metadataProviders: updated,
         hasPendingChanges: JSON.stringify(updated) !== prevState.initialMetadataProviders
+      };
+    });
+  };
+
+  onCustomFieldChange = (key, field, value) => {
+    this.setState((prevState) => {
+      const updated = prevState.metadataProviders.map((p) =>
+        p.key === key ? { ...p, [field]: value } : p
+      );
+
+      return {
+        metadataProviders: updated,
+        hasPendingChanges: JSON.stringify(updated) !== prevState.initialMetadataProviders
+      };
+    });
+  };
+
+  onAddCustomProvider = () => {
+    const { newCustomName, newCustomUrl, newCustomAuthToken } = this.state;
+
+    if (!newCustomName.trim() || !newCustomUrl.trim()) {
+      return;
+    }
+
+    const key = `custom_${newCustomName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+
+    this.setState((prevState) => {
+      const updated = [
+        ...prevState.metadataProviders,
+        {
+          key,
+          displayName: newCustomName.trim(),
+          enabled: true,
+          priority: prevState.metadataProviders.length,
+          requiresAuth: false,
+          settings: {},
+          isCustom: true,
+          url: newCustomUrl.trim(),
+          authToken: newCustomAuthToken.trim()
+        }
+      ];
+
+      return {
+        metadataProviders: updated,
+        hasPendingChanges: true,
+        showAddCustom: false,
+        newCustomName: '',
+        newCustomUrl: '',
+        newCustomAuthToken: ''
+      };
+    });
+  };
+
+  onRemoveCustomProvider = (key) => {
+    this.setState((prevState) => {
+      const updated = prevState.metadataProviders
+        .filter((p) => p.key !== key)
+        .map((p, i) => ({ ...p, priority: i }));
+
+      return {
+        metadataProviders: updated,
+        hasPendingChanges: true
       };
     });
   };
@@ -221,7 +287,20 @@ class MetadataSettings extends Component {
               {provider.displayName}
             </strong>
 
-            {provider.requiresAuth &&
+            {provider.isCustom &&
+              <span style={{
+                fontSize: '11px',
+                padding: '2px 6px',
+                backgroundColor: 'var(--primaryColor)',
+                borderRadius: '3px',
+                color: 'white',
+                marginRight: '5px'
+              }}>
+                Custom
+              </span>
+            }
+
+            {provider.requiresAuth && !provider.isCustom &&
               <span style={{
                 fontSize: '11px',
                 padding: '2px 6px',
@@ -250,7 +329,50 @@ class MetadataSettings extends Component {
             }
           </div>
 
-          {provider.key === 'hardcover' && provider.enabled &&
+          {provider.isCustom && provider.enabled &&
+            <div style={{ marginTop: '5px' }}>
+              <div style={{ marginBottom: '5px' }}>
+                <label style={{ fontSize: '12px', marginRight: '5px' }}>
+                  URL:
+                </label>
+                <input
+                  type="text"
+                  value={provider.url || ''}
+                  onChange={(e) => this.onCustomFieldChange(provider.key, 'url', e.target.value)}
+                  placeholder="https://my-provider.example.com"
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid var(--borderColor)',
+                    borderRadius: '3px',
+                    width: '400px',
+                    backgroundColor: 'var(--inputBackgroundColor)',
+                    color: 'var(--textColor)'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', marginRight: '5px' }}>
+                  Authorization:
+                </label>
+                <input
+                  type="password"
+                  value={provider.authToken || ''}
+                  onChange={(e) => this.onCustomFieldChange(provider.key, 'authToken', e.target.value)}
+                  placeholder="Optional auth token"
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid var(--borderColor)',
+                    borderRadius: '3px',
+                    width: '300px',
+                    backgroundColor: 'var(--inputBackgroundColor)',
+                    color: 'var(--textColor)'
+                  }}
+                />
+              </div>
+            </div>
+          }
+
+          {provider.key === 'hardcover' && provider.enabled && !provider.isCustom &&
             <div style={{ marginTop: '5px' }}>
               <label style={{ fontSize: '12px', marginRight: '5px' }}>
                 API Token:
@@ -272,7 +394,7 @@ class MetadataSettings extends Component {
             </div>
           }
 
-          {provider.key === 'rreadingglasses' && provider.enabled &&
+          {provider.key === 'rreadingglasses' && provider.enabled && !provider.isCustom &&
             <div style={{ marginTop: '5px' }}>
               <label style={{ fontSize: '12px', marginRight: '5px' }}>
                 Base URL:
@@ -305,12 +427,141 @@ class MetadataSettings extends Component {
             {isTesting ? 'Testing...' : 'Test'}
           </Button>
 
+          {provider.isCustom &&
+            <Button
+              kind={kinds.DANGER}
+              size="small"
+              onPress={() => this.onRemoveCustomProvider(provider.key)}
+            >
+              <Icon name={icons.DELETE} />
+            </Button>
+          }
+
           <Button
             kind={provider.enabled ? kinds.SUCCESS : kinds.DANGER}
             size="small"
             onPress={() => this.onProviderToggle(provider.key)}
           >
             {provider.enabled ? 'Enabled' : 'Disabled'}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  renderAddCustomForm = () => {
+    const { showAddCustom, newCustomName, newCustomUrl, newCustomAuthToken } = this.state;
+
+    if (!showAddCustom) {
+      return (
+        <div style={{ marginTop: '15px' }}>
+          <Button
+            kind={kinds.PRIMARY}
+            onPress={() => this.setState({ showAddCustom: true })}
+          >
+            <Icon name={icons.ADD} />
+            {' Add Custom Provider'}
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{
+        marginTop: '15px',
+        padding: '15px',
+        border: '1px solid var(--borderColor)',
+        borderRadius: '4px',
+        backgroundColor: 'var(--tableBackgroundColor)'
+      }}>
+        <h4 style={{ marginTop: 0, marginBottom: '10px' }}>Add Custom Metadata Provider</h4>
+        <Alert kind={kinds.INFO} style={{ marginBottom: '10px' }}>
+          Custom providers must implement the
+          {' '}
+          <a
+            href="https://audiobookshelf.org/docs/documentation/community/community-providers/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Audiobookshelf custom provider specification
+          </a>
+          . The provider should respond to GET /search?query=... with a JSON object containing a "matches" array.
+        </Alert>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '3px' }}>
+            Name *
+          </label>
+          <input
+            type="text"
+            value={newCustomName}
+            onChange={(e) => this.setState({ newCustomName: e.target.value })}
+            placeholder="My Custom Provider"
+            style={{
+              padding: '6px 8px',
+              border: '1px solid var(--borderColor)',
+              borderRadius: '3px',
+              width: '300px',
+              backgroundColor: 'var(--inputBackgroundColor)',
+              color: 'var(--textColor)'
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '3px' }}>
+            URL *
+          </label>
+          <input
+            type="text"
+            value={newCustomUrl}
+            onChange={(e) => this.setState({ newCustomUrl: e.target.value })}
+            placeholder="https://my-provider.example.com"
+            style={{
+              padding: '6px 8px',
+              border: '1px solid var(--borderColor)',
+              borderRadius: '3px',
+              width: '400px',
+              backgroundColor: 'var(--inputBackgroundColor)',
+              color: 'var(--textColor)'
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '3px' }}>
+            Authorization (optional)
+          </label>
+          <input
+            type="password"
+            value={newCustomAuthToken}
+            onChange={(e) => this.setState({ newCustomAuthToken: e.target.value })}
+            placeholder="Bearer token or API key"
+            style={{
+              padding: '6px 8px',
+              border: '1px solid var(--borderColor)',
+              borderRadius: '3px',
+              width: '300px',
+              backgroundColor: 'var(--inputBackgroundColor)',
+              color: 'var(--textColor)'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button
+            kind={kinds.PRIMARY}
+            isDisabled={!newCustomName.trim() || !newCustomUrl.trim()}
+            onPress={this.onAddCustomProvider}
+          >
+            Add Provider
+          </Button>
+          <Button
+            kind={kinds.DEFAULT}
+            onPress={() => this.setState({
+              showAddCustom: false,
+              newCustomName: '',
+              newCustomUrl: '',
+              newCustomAuthToken: ''
+            })}
+          >
+            Cancel
           </Button>
         </div>
       </div>
@@ -351,9 +602,10 @@ class MetadataSettings extends Component {
                 {metadataProviders.map((provider, index) =>
                   this.renderProviderRow(provider, index)
                 )}
-
               </div>
             }
+
+            {providersFetched && this.renderAddCustomForm()}
           </FieldSet>
 
           <MetadataProviderConnector

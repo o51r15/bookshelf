@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,16 @@ namespace Readarr.Api.V1.Config
     {
         private readonly IConfigService _configService;
         private readonly IEnumerable<IMetadataProvider> _providers;
+        private readonly IMetadataProviderService _providerService;
 
-        public MetadataSourceController(IConfigService configService,
-            IEnumerable<IMetadataProvider> providers)
+        public MetadataSourceController(
+            IConfigService configService,
+            IEnumerable<IMetadataProvider> providers,
+            IMetadataProviderService providerService)
         {
             _configService = configService;
             _providers = providers;
+            _providerService = providerService;
         }
 
         [HttpGet]
@@ -29,16 +34,19 @@ namespace Readarr.Api.V1.Config
             return configs.Select(c =>
             {
                 var provider = available.FirstOrDefault(p =>
-                    p.Key.Equals(c.Key, global::System.StringComparison.OrdinalIgnoreCase));
+                    p.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase));
 
                 return new MetadataSourceResource
                 {
                     Key = c.Key,
-                    DisplayName = provider?.DisplayName ?? c.Key,
+                    DisplayName = c.IsCustom ? c.DisplayName : (provider?.DisplayName ?? c.Key),
                     Enabled = c.Enabled,
                     Priority = c.Priority,
-                    RequiresAuth = provider?.RequiresAuth ?? false,
-                    Settings = c.Settings ?? new Dictionary<string, string>()
+                    RequiresAuth = c.IsCustom ? !string.IsNullOrWhiteSpace(c.AuthToken) : (provider?.RequiresAuth ?? false),
+                    Settings = c.Settings ?? new Dictionary<string, string>(),
+                    IsCustom = c.IsCustom,
+                    Url = c.Url,
+                    AuthToken = c.AuthToken
                 };
             }).OrderBy(r => r.Priority).ToList();
         }
@@ -51,7 +59,11 @@ namespace Readarr.Api.V1.Config
                 Key = r.Key,
                 Enabled = r.Enabled,
                 Priority = r.Priority,
-                Settings = r.Settings
+                Settings = r.Settings,
+                IsCustom = r.IsCustom,
+                DisplayName = r.IsCustom ? r.DisplayName : null,
+                Url = r.IsCustom ? r.Url : null,
+                AuthToken = r.IsCustom ? r.AuthToken : null
             }).ToList();
 
             _configService.SaveMetadataProviderConfigs(configs);
@@ -61,16 +73,8 @@ namespace Readarr.Api.V1.Config
         [HttpPost("test")]
         public IActionResult TestProvider([FromBody] MetadataSourceTestRequest request)
         {
-            var provider = _providers.FirstOrDefault(p =>
-                p.Key.Equals(request.Key, global::System.StringComparison.OrdinalIgnoreCase));
-
-            if (provider == null)
-            {
-                return NotFound(new { message = $"Provider '{request.Key}' not found" });
-            }
-
-            var success = provider.TestConnection();
-            return Ok(new { success, key = request.Key });
+            var result = _providerService.TestProvider(request.Key);
+            return Ok(new { success = result.Success, key = request.Key, message = result.Message });
         }
     }
 
@@ -82,6 +86,9 @@ namespace Readarr.Api.V1.Config
         public int Priority { get; set; }
         public bool RequiresAuth { get; set; }
         public Dictionary<string, string> Settings { get; set; }
+        public bool IsCustom { get; set; }
+        public string Url { get; set; }
+        public string AuthToken { get; set; }
     }
 
     public class MetadataSourceTestRequest
