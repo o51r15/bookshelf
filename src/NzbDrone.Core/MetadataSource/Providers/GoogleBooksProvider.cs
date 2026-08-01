@@ -139,8 +139,12 @@ namespace NzbDrone.Core.MetadataSource.Providers
         {
             try
             {
-                var results = Search("volumes?q=test&maxResults=1");
-                return results.Any();
+                // Make a minimal request to verify the API is reachable.
+                // A 429 (rate limit) still means the service is up and responding.
+                var request = BuildRequest("volumes?q=test&maxResults=1");
+                var response = _httpClient.Get(request);
+                return response.StatusCode == HttpStatusCode.OK ||
+                       response.StatusCode == HttpStatusCode.TooManyRequests;
             }
             catch
             {
