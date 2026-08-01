@@ -1106,6 +1106,7 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
                 PageCount = result.PageCount ?? 0,
                 Publisher = result.Publisher,
                 Images = new List<MediaCover.MediaCover>(),
+                Links = new List<Links> { new Links { Url = $"https://www.google.com/search?q={Uri.EscapeDataString((result.Title ?? "Unknown") + " " + authorName)}", Name = "Google" } },
                 Monitored = true
             };
 
