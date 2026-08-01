@@ -29,7 +29,7 @@ namespace Readarr.Api.V1.Config
             return configs.Select(c =>
             {
                 var provider = available.FirstOrDefault(p =>
-                    p.Key.Equals(c.Key, System.StringComparison.OrdinalIgnoreCase));
+                    p.Key.Equals(c.Key, global::System.StringComparison.OrdinalIgnoreCase));
 
                 return new MetadataSourceResource
                 {
@@ -62,7 +62,7 @@ namespace Readarr.Api.V1.Config
         public IActionResult TestProvider([FromBody] MetadataSourceTestRequest request)
         {
             var provider = _providers.FirstOrDefault(p =>
-                p.Key.Equals(request.Key, System.StringComparison.OrdinalIgnoreCase));
+                p.Key.Equals(request.Key, global::System.StringComparison.OrdinalIgnoreCase));
 
             if (provider == null)
             {
