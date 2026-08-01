@@ -106,22 +106,11 @@ function Settings() {
           className={styles.link}
           to="/settings/metadata"
         >
-          {translate('Metadata')}
-        </Link>
-
-        <div className={styles.summary}>
-          {translate('MetadataSettingsSummary')}
-        </div>
-
-        <Link
-          className={styles.link}
-          to="/settings/development"
-        >
           Metadata Sources
         </Link>
 
         <div className={styles.summary}>
-          Configure metadata providers, priority order, and API keys
+          Configure metadata providers, Calibre integration, and API keys
         </div>
 
         <Link
