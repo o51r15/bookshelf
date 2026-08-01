@@ -14,9 +14,13 @@ namespace NzbDrone.Core.MetadataSource.Providers
         private static readonly Regex StripNonAlphanumeric = new Regex(@"[^a-z0-9\s]", RegexOptions.Compiled);
         private static readonly Regex CollapseWhitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
-        private static readonly string[] ArticlePrefixes = { "the ", "a ", "an " };
+        private static readonly string[] ArticlePrefixes =
+        {
+            "the ", "a ", "an "
+        };
 
-        private static readonly string[] IdentifierPrefixes = {
+        private static readonly string[] IdentifierPrefixes =
+        {
             "edition:", "work:", "author:", "isbn:", "asin:"
         };
 

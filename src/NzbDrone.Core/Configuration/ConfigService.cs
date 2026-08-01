@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Newtonsoft.Json;
 using NLog;
 using NzbDrone.Common.EnsureThat;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http.Proxy;
-using Newtonsoft.Json;
 using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
-using NzbDrone.Core.MetadataSource.Providers;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.MetadataSource.Providers;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Security;
 

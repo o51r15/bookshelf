@@ -22,7 +22,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         public string Title { get; set; }
         public string Subtitle { get; set; }
-        public List<string> Authors { get; set; } = new();
+        public List<string> Authors { get; set; } = new List<string>();
         public string Isbn { get; set; }
         public string Isbn13 { get; set; }
         public string Asin { get; set; }
@@ -32,13 +32,13 @@ namespace NzbDrone.Core.MetadataSource.Providers
         public int? PublishedYear { get; set; }
         public string Publisher { get; set; }
         public string Language { get; set; }
-        public List<string> Genres { get; set; } = new();
+        public List<string> Genres { get; set; } = new List<string>();
 
         /// <summary>
         /// Cross-reference IDs from other systems when available.
         /// Key = system name (e.g. "goodreads", "openlibrary"), Value = ID.
         /// </summary>
-        public Dictionary<string, string> ExternalIds { get; set; } = new();
+        public Dictionary<string, string> ExternalIds { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Match confidence score (0.0 - 1.0) set by the fuzzy matching layer.
@@ -58,9 +58,9 @@ namespace NzbDrone.Core.MetadataSource.Providers
         public string SortName { get; set; }
         public string Description { get; set; }
         public string ImageUrl { get; set; }
-        public List<string> Aliases { get; set; } = new();
-        public Dictionary<string, string> ExternalIds { get; set; } = new();
-        public List<MetadataSearchResult> Works { get; set; } = new();
+        public List<string> Aliases { get; set; } = new List<string>();
+        public Dictionary<string, string> ExternalIds { get; set; } = new Dictionary<string, string>();
+        public List<MetadataSearchResult> Works { get; set; } = new List<MetadataSearchResult>();
     }
 
     /// <summary>
@@ -71,12 +71,12 @@ namespace NzbDrone.Core.MetadataSource.Providers
         public string ForeignId { get; set; }
         public string ProviderKey { get; set; }
         public string Title { get; set; }
-        public List<string> Authors { get; set; } = new();
+        public List<string> Authors { get; set; } = new List<string>();
         public string AuthorForeignId { get; set; }
         public string Description { get; set; }
         public string CoverUrl { get; set; }
-        public List<MetadataEditionResult> Editions { get; set; } = new();
-        public Dictionary<string, string> ExternalIds { get; set; } = new();
+        public List<MetadataEditionResult> Editions { get; set; } = new List<MetadataEditionResult>();
+        public Dictionary<string, string> ExternalIds { get; set; } = new Dictionary<string, string>();
         public MetadataSeriesLink Series { get; set; }
     }
 

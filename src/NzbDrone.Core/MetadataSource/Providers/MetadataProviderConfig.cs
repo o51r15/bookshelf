@@ -26,7 +26,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
         /// <summary>
         /// Provider-specific settings (API keys, base URLs, etc.).
         /// </summary>
-        public Dictionary<string, string> Settings { get; set; } = new();
+        public Dictionary<string, string> Settings { get; set; } = new Dictionary<string, string>();
     }
 
     /// <summary>
@@ -35,6 +35,6 @@ namespace NzbDrone.Core.MetadataSource.Providers
     /// </summary>
     public class MetadataProviderConfigList
     {
-        public List<MetadataProviderConfig> Providers { get; set; } = new();
+        public List<MetadataProviderConfig> Providers { get; set; } = new List<MetadataProviderConfig>();
     }
 }

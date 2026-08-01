@@ -124,6 +124,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
                 if (foreignId.StartsWith("OL") && foreignId.EndsWith("A"))
                 {
                     authorKey = foreignId;
+
                     // Fetch author details
                     var authorRequest = BuildRequest($"authors/{authorKey}.json");
                     var authorResponse = _httpClient.Get(authorRequest);
