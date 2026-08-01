@@ -13,6 +13,7 @@ import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
 import { icons, inputTypes, kinds } from 'Helpers/Props';
 import SettingsToolbarConnector from 'Settings/SettingsToolbarConnector';
+import createAjaxRequest from 'Utilities/createAjaxRequest';
 import translate from 'Utilities/String/translate';
 
 const logLevelOptions = [
@@ -42,18 +43,20 @@ class DevelopmentSettings extends Component {
   fetchProviders = () => {
     this.setState({ providersFetching: true });
 
-    fetch('/api/v1/config/metadatasource')
-      .then((resp) => resp.json())
-      .then((data) => {
-        this.setState({
-          metadataProviders: data,
-          providersFetched: true,
-          providersFetching: false
-        });
-      })
-      .catch(() => {
-        this.setState({ providersFetching: false });
+    const { request } = createAjaxRequest({
+      url: '/config/metadatasource',
+      dataType: 'json'
+    });
+
+    request.then((data) => {
+      this.setState({
+        metadataProviders: data,
+        providersFetched: true,
+        providersFetching: false
       });
+    }).fail(() => {
+      this.setState({ providersFetching: false });
+    });
   };
 
   onProviderToggle = (key) => {
@@ -108,38 +111,39 @@ class DevelopmentSettings extends Component {
   };
 
   onSaveProviders = () => {
-    fetch('/api/v1/config/metadatasource', {
+    const { request } = createAjaxRequest({
+      url: '/config/metadatasource',
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(this.state.metadataProviders)
-    })
-      .then((resp) => resp.json())
-      .then((data) => {
-        this.setState({ metadataProviders: data });
-      });
+      dataType: 'json',
+      data: JSON.stringify(this.state.metadataProviders)
+    });
+
+    request.then((data) => {
+      this.setState({ metadataProviders: data });
+    });
   };
 
   onTestProvider = (key) => {
     this.setState({ testingProvider: key });
 
-    fetch('/api/v1/config/metadatasource/test', {
+    const { request } = createAjaxRequest({
+      url: '/config/metadatasource/test',
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key })
-    })
-      .then((resp) => resp.json())
-      .then((data) => {
-        this.setState((prevState) => ({
-          testingProvider: null,
-          testResults: { ...prevState.testResults, [key]: data.success }
-        }));
-      })
-      .catch(() => {
-        this.setState((prevState) => ({
-          testingProvider: null,
-          testResults: { ...prevState.testResults, [key]: false }
-        }));
-      });
+      dataType: 'json',
+      data: JSON.stringify({ key })
+    });
+
+    request.then((data) => {
+      this.setState((prevState) => ({
+        testingProvider: null,
+        testResults: { ...prevState.testResults, [key]: data.success }
+      }));
+    }).fail(() => {
+      this.setState((prevState) => ({
+        testingProvider: null,
+        testResults: { ...prevState.testResults, [key]: false }
+      }));
+    });
   };
 
   //
