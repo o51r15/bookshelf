@@ -115,6 +115,17 @@ function Settings() {
 
         <Link
           className={styles.link}
+          to="/settings/development"
+        >
+          Metadata Sources
+        </Link>
+
+        <div className={styles.summary}>
+          Configure metadata providers, priority order, and API keys
+        </div>
+
+        <Link
+          className={styles.link}
           to="/settings/tags"
         >
           {translate('Tags')}
