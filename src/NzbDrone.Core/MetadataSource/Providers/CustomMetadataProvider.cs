@@ -14,12 +14,12 @@ namespace NzbDrone.Core.MetadataSource.Providers
     /// GET /search?query=...&amp;author=... with optional AUTHORIZATION header.
     /// Response: { "matches": [ BookMetadata, ... ] }
     ///
-    /// IMPORTANT: This class intentionally does NOT implement IMetadataProvider
-    /// to prevent DryIoc from auto-registering it (its constructor takes runtime
-    /// string parameters that DI cannot resolve). MetadataProviderService wraps
-    /// instances in CustomMetadataProviderAdapter to satisfy IMetadataProvider.
+    /// DryIoc will auto-register this class via the (IHttpClient, Logger)
+    /// constructor, creating a single disabled "placeholder" instance.
+    /// Real instances are created via the static Create() factory method
+    /// by MetadataProviderService.
     /// </summary>
-    public class CustomMetadataProvider
+    public class CustomMetadataProvider : IMetadataProvider
     {
         private readonly IHttpClient _httpClient;
         private readonly Logger _logger;
@@ -27,12 +27,30 @@ namespace NzbDrone.Core.MetadataSource.Providers
         private readonly string _displayName;
         private readonly string _baseUrl;
         private readonly string _authToken;
+        private readonly bool _isPlaceholder;
 
         public string Key => _key;
         public string DisplayName => _displayName;
         public bool RequiresAuth => false;
 
-        public CustomMetadataProvider(
+        /// <summary>
+        /// DI-friendly constructor. Creates a disabled placeholder that DryIoc
+        /// can instantiate without error. This instance is never used for
+        /// actual searches — MetadataProviderService filters it out because
+        /// its Key won't match any config.
+        /// </summary>
+        public CustomMetadataProvider(IHttpClient httpClient, Logger logger)
+        {
+            _httpClient = httpClient;
+            _logger = logger;
+            _key = "__custom_placeholder__";
+            _displayName = "Custom (placeholder)";
+            _baseUrl = string.Empty;
+            _authToken = string.Empty;
+            _isPlaceholder = true;
+        }
+
+        private CustomMetadataProvider(
             IHttpClient httpClient,
             Logger logger,
             string key,
@@ -46,20 +64,50 @@ namespace NzbDrone.Core.MetadataSource.Providers
             _displayName = displayName;
             _baseUrl = baseUrl?.TrimEnd('/') ?? string.Empty;
             _authToken = authToken;
+            _isPlaceholder = false;
+        }
+
+        /// <summary>
+        /// Factory method for creating real custom provider instances.
+        /// </summary>
+        public static CustomMetadataProvider Create(
+            IHttpClient httpClient,
+            Logger logger,
+            string key,
+            string displayName,
+            string baseUrl,
+            string authToken)
+        {
+            return new CustomMetadataProvider(httpClient, logger, key, displayName, baseUrl, authToken);
         }
 
         public List<MetadataSearchResult> SearchBooks(string query)
         {
+            if (_isPlaceholder)
+            {
+                return new List<MetadataSearchResult>();
+            }
+
             return Search(query, null);
         }
 
         public List<MetadataSearchResult> SearchAuthors(string query)
         {
+            if (_isPlaceholder)
+            {
+                return new List<MetadataSearchResult>();
+            }
+
             return Search(null, query);
         }
 
         public MetadataSearchResult SearchByIsbn(string isbn)
         {
+            if (_isPlaceholder)
+            {
+                return null;
+            }
+
             var results = Search(isbn, null);
             return results.FirstOrDefault(r =>
                 string.Equals(r.Isbn, isbn, StringComparison.OrdinalIgnoreCase) ||
@@ -68,6 +116,11 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         public MetadataSearchResult SearchByAsin(string asin)
         {
+            if (_isPlaceholder)
+            {
+                return null;
+            }
+
             var results = Search(asin, null);
             return results.FirstOrDefault(r =>
                 string.Equals(r.Asin, asin, StringComparison.OrdinalIgnoreCase));
@@ -87,6 +140,11 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         public bool TestConnection()
         {
+            if (_isPlaceholder)
+            {
+                return false;
+            }
+
             try
             {
                 var results = Search("test", null);

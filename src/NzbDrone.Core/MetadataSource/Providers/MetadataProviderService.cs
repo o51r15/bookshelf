@@ -35,32 +35,6 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
     public class MetadataProviderService : IMetadataProviderService
     {
-        /// <summary>
-        /// Private nested adapter so DryIoc assembly scanning cannot discover it.
-        /// Wraps a CustomMetadataProvider (which cannot implement IMetadataProvider
-        /// directly due to DryIoc auto-registration) as an IMetadataProvider.
-        /// </summary>
-        private class CustomMetadataProviderAdapter : IMetadataProvider
-        {
-            private readonly CustomMetadataProvider _inner;
-
-            public CustomMetadataProviderAdapter(CustomMetadataProvider inner)
-            {
-                _inner = inner;
-            }
-
-            public string Key => _inner.Key;
-            public string DisplayName => _inner.DisplayName;
-            public bool RequiresAuth => _inner.RequiresAuth;
-            public List<MetadataSearchResult> SearchBooks(string query) => _inner.SearchBooks(query);
-            public List<MetadataSearchResult> SearchAuthors(string query) => _inner.SearchAuthors(query);
-            public MetadataSearchResult SearchByIsbn(string isbn) => _inner.SearchByIsbn(isbn);
-            public MetadataSearchResult SearchByAsin(string asin) => _inner.SearchByAsin(asin);
-            public MetadataAuthorResult GetAuthorInfo(string foreignId) => _inner.GetAuthorInfo(foreignId);
-            public MetadataBookResult GetBookInfo(string foreignId) => _inner.GetBookInfo(foreignId);
-            public bool TestConnection() => _inner.TestConnection();
-        }
-
         private readonly IEnumerable<IMetadataProvider> _providers;
         private readonly IConfigService _configService;
         private readonly IHttpClient _httpClient;
@@ -80,7 +54,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
         public List<IMetadataProvider> GetAvailableProviders()
         {
-            return _providers.ToList();
+            return _providers.Where(p => p.Key != "__custom_placeholder__").ToList();
         }
 
         public List<MetadataProviderConfig> GetProviderConfigs()
@@ -91,7 +65,7 @@ namespace NzbDrone.Core.MetadataSource.Providers
             var existingKeys = configs.Select(c => c.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var priority = configs.Any() ? configs.Max(c => c.Priority) + 1 : 0;
 
-            foreach (var provider in _providers)
+            foreach (var provider in _providers.Where(p => p.Key != "__custom_placeholder__"))
             {
                 if (!existingKeys.Contains(provider.Key))
                 {
@@ -125,8 +99,8 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
                 if (config != null)
                 {
-                    provider = new CustomMetadataProviderAdapter(new CustomMetadataProvider(
-                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken));
+                    provider = CustomMetadataProvider.Create(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
                 }
             }
 
@@ -386,8 +360,8 @@ namespace NzbDrone.Core.MetadataSource.Providers
 
                 if (config != null)
                 {
-                    provider = new CustomMetadataProviderAdapter(new CustomMetadataProvider(
-                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken));
+                    provider = CustomMetadataProvider.Create(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
                 }
             }
 
@@ -405,8 +379,8 @@ namespace NzbDrone.Core.MetadataSource.Providers
             {
                 if (config.IsCustom)
                 {
-                    yield return new CustomMetadataProviderAdapter(new CustomMetadataProvider(
-                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken));
+                    yield return CustomMetadataProvider.Create(
+                        _httpClient, _logger, config.Key, config.DisplayName, config.Url, config.AuthToken);
                 }
                 else
                 {
