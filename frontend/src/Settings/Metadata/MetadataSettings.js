@@ -49,6 +49,7 @@ class MetadataSettings extends Component {
     request.then((data) => {
       this.setState({
         metadataProviders: data,
+        initialMetadataProviders: JSON.stringify(data),
         providersFetched: true,
         providersFetching: false
       });
@@ -58,11 +59,16 @@ class MetadataSettings extends Component {
   };
 
   onProviderToggle = (key) => {
-    this.setState((prevState) => ({
-      metadataProviders: prevState.metadataProviders.map((p) =>
+    this.setState((prevState) => {
+      const updated = prevState.metadataProviders.map((p) =>
         p.key === key ? { ...p, enabled: !p.enabled } : p
-      )
-    }));
+      );
+
+      return {
+        metadataProviders: updated,
+        hasPendingChanges: JSON.stringify(updated) !== prevState.initialMetadataProviders
+      };
+    });
   };
 
   onProviderMove = (index, direction) => {
@@ -78,23 +84,33 @@ class MetadataSettings extends Component {
       providers[index] = providers[newIndex];
       providers[newIndex] = temp;
 
+      const updated = providers.map((p, i) => ({ ...p, priority: i }));
+
       return {
-        metadataProviders: providers.map((p, i) => ({ ...p, priority: i }))
+        metadataProviders: updated,
+        hasPendingChanges: JSON.stringify(updated) !== prevState.initialMetadataProviders
       };
     });
   };
 
   onProviderSettingChange = (key, settingKey, value) => {
-    this.setState((prevState) => ({
-      metadataProviders: prevState.metadataProviders.map((p) =>
+    this.setState((prevState) => {
+      const updated = prevState.metadataProviders.map((p) =>
         p.key === key
           ? { ...p, settings: { ...p.settings, [settingKey]: value } }
           : p
-      )
-    }));
+      );
+
+      return {
+        metadataProviders: updated,
+        hasPendingChanges: JSON.stringify(updated) !== prevState.initialMetadataProviders
+      };
+    });
   };
 
   onSaveProviders = () => {
+    this.setState({ isSaving: true });
+
     const { request } = createAjaxRequest({
       url: '/config/metadatasource',
       method: 'PUT',
@@ -103,7 +119,14 @@ class MetadataSettings extends Component {
     });
 
     request.then((data) => {
-      this.setState({ metadataProviders: data });
+      this.setState({
+        metadataProviders: data,
+        initialMetadataProviders: JSON.stringify(data),
+        isSaving: false,
+        hasPendingChanges: false
+      });
+    }).fail(() => {
+      this.setState({ isSaving: false });
     });
   };
 
@@ -144,6 +167,10 @@ class MetadataSettings extends Component {
   onSavePress = () => {
     if (this._saveCallback) {
       this._saveCallback();
+    }
+
+    if (this.state.providersFetched) {
+      this.onSaveProviders();
     }
   };
 
@@ -325,14 +352,6 @@ class MetadataSettings extends Component {
                   this.renderProviderRow(provider, index)
                 )}
 
-                <div style={{ marginTop: '15px' }}>
-                  <Button
-                    kind={kinds.PRIMARY}
-                    onPress={this.onSaveProviders}
-                  >
-                    Save Provider Settings
-                  </Button>
-                </div>
               </div>
             }
           </FieldSet>
