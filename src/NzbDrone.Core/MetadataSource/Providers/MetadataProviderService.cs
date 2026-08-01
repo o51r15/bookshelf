@@ -33,33 +33,34 @@ namespace NzbDrone.Core.MetadataSource.Providers
         public string Message { get; set; }
     }
 
-    /// <summary>
-    /// Wraps a CustomMetadataProvider (which cannot implement IMetadataProvider
-    /// directly due to DryIoc auto-registration) as an IMetadataProvider.
-    /// </summary>
-    internal class CustomMetadataProviderAdapter : IMetadataProvider
-    {
-        private readonly CustomMetadataProvider _inner;
-
-        public CustomMetadataProviderAdapter(CustomMetadataProvider inner)
-        {
-            _inner = inner;
-        }
-
-        public string Key => _inner.Key;
-        public string DisplayName => _inner.DisplayName;
-        public bool RequiresAuth => _inner.RequiresAuth;
-        public List<MetadataSearchResult> SearchBooks(string query) => _inner.SearchBooks(query);
-        public List<MetadataSearchResult> SearchAuthors(string query) => _inner.SearchAuthors(query);
-        public MetadataSearchResult SearchByIsbn(string isbn) => _inner.SearchByIsbn(isbn);
-        public MetadataSearchResult SearchByAsin(string asin) => _inner.SearchByAsin(asin);
-        public MetadataAuthorResult GetAuthorInfo(string foreignId) => _inner.GetAuthorInfo(foreignId);
-        public MetadataBookResult GetBookInfo(string foreignId) => _inner.GetBookInfo(foreignId);
-        public bool TestConnection() => _inner.TestConnection();
-    }
-
     public class MetadataProviderService : IMetadataProviderService
     {
+        /// <summary>
+        /// Private nested adapter so DryIoc assembly scanning cannot discover it.
+        /// Wraps a CustomMetadataProvider (which cannot implement IMetadataProvider
+        /// directly due to DryIoc auto-registration) as an IMetadataProvider.
+        /// </summary>
+        private class CustomMetadataProviderAdapter : IMetadataProvider
+        {
+            private readonly CustomMetadataProvider _inner;
+
+            public CustomMetadataProviderAdapter(CustomMetadataProvider inner)
+            {
+                _inner = inner;
+            }
+
+            public string Key => _inner.Key;
+            public string DisplayName => _inner.DisplayName;
+            public bool RequiresAuth => _inner.RequiresAuth;
+            public List<MetadataSearchResult> SearchBooks(string query) => _inner.SearchBooks(query);
+            public List<MetadataSearchResult> SearchAuthors(string query) => _inner.SearchAuthors(query);
+            public MetadataSearchResult SearchByIsbn(string isbn) => _inner.SearchByIsbn(isbn);
+            public MetadataSearchResult SearchByAsin(string asin) => _inner.SearchByAsin(asin);
+            public MetadataAuthorResult GetAuthorInfo(string foreignId) => _inner.GetAuthorInfo(foreignId);
+            public MetadataBookResult GetBookInfo(string foreignId) => _inner.GetBookInfo(foreignId);
+            public bool TestConnection() => _inner.TestConnection();
+        }
+
         private readonly IEnumerable<IMetadataProvider> _providers;
         private readonly IConfigService _configService;
         private readonly IHttpClient _httpClient;
