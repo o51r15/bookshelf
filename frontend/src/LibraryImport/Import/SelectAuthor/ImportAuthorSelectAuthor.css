@@ -65,8 +65,8 @@
   right: 0;
   max-height: 250px;
   overflow-y: auto;
-  background-color: #fff;
-  color: #000;
+  background-color: #fff !important;
+  color: #222 !important;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -83,7 +83,7 @@
 .resultItem {
   padding: 8px 12px;
   cursor: pointer;
-  color: #000;
+  color: #222 !important;
   border-bottom: 1px solid #e0e0e0;
 }
 

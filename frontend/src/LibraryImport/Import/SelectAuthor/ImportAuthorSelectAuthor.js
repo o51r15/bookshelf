@@ -25,6 +25,20 @@ class ImportAuthorSelectAuthor extends Component {
     this._containerRef = React.createRef();
   }
 
+  componentDidUpdate(prevProps) {
+    // Recalculate openAbove when opening
+    if (this.props.isOpen && !prevProps.isOpen && this._containerRef.current) {
+      const rect = this._containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      if (spaceBelow < 280) {
+        this.setState({ openAbove: true });
+      } else {
+        this.setState({ openAbove: false });
+      }
+    }
+  }
+
   componentWillUnmount() {
     if (this._searchTimeout) {
       clearTimeout(this._searchTimeout);
