@@ -20,3 +20,8 @@
   overflow: visible;
   position: relative;
 }
+
+.activeRow {
+  position: relative;
+  z-index: 50;
+}

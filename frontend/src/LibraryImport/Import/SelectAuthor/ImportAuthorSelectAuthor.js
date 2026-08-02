@@ -18,10 +18,12 @@ class ImportAuthorSelectAuthor extends Component {
 
     this.state = {
       isOpen: false,
+      openAbove: false,
       searchTerm: props.id || ''
     };
 
     this._searchTimeout = null;
+    this._containerRef = React.createRef();
   }
 
   componentWillUnmount() {
@@ -34,10 +36,29 @@ class ImportAuthorSelectAuthor extends Component {
   // Listeners
 
   onToggle = () => {
-    this.setState((state) => ({
-      isOpen: !state.isOpen,
-      searchTerm: state.isOpen ? state.searchTerm : (this.props.id || '')
-    }));
+    this.setState((state) => {
+      const willOpen = !state.isOpen;
+
+      if (willOpen && this.props.onOpen) {
+        this.props.onOpen();
+      } else if (!willOpen && this.props.onClose) {
+        this.props.onClose();
+      }
+
+      let openAbove = state.openAbove;
+
+      if (willOpen && this._containerRef.current) {
+        const rect = this._containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        openAbove = spaceBelow < 280;
+      }
+
+      return {
+        isOpen: willOpen,
+        openAbove,
+        searchTerm: state.isOpen ? state.searchTerm : (this.props.id || '')
+      };
+    });
   };
 
   onSearchChange = ({ value }) => {
@@ -55,6 +76,10 @@ class ImportAuthorSelectAuthor extends Component {
   onAuthorSelect = (author) => {
     this.props.onInputChange(this.props.id, 'selectedAuthor', author);
     this.setState({ isOpen: false });
+
+    if (this.props.onClose) {
+      this.props.onClose();
+    }
   };
 
   //
@@ -73,73 +98,76 @@ class ImportAuthorSelectAuthor extends Component {
 
     const {
       isOpen,
+      openAbove,
       searchTerm
     } = this.state;
 
     // Closed state rendering
     if (!isOpen) {
-      let closedContent;
+      let closedInner;
 
       if (isFetching || isQueued) {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
+        closedInner = (
+          <React.Fragment>
             <SpinnerIcon
               className={styles.spinner}
               name={icons.SPINNER}
               isSpinning={true}
             />
             <span className={styles.label}>Searching...</span>
-          </div>
+          </React.Fragment>
         );
       } else if (error) {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
+        closedInner = (
+          <React.Fragment>
             <Icon
               className={styles.warningIcon}
               name={icons.WARNING}
               kind={kinds.WARNING}
             />
             <span className={styles.label}>Search failed, click to try again</span>
-          </div>
+          </React.Fragment>
         );
       } else if (!selectedAuthor && isPopulated) {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
+        closedInner = (
+          <React.Fragment>
             <Icon
               className={styles.warningIcon}
               name={icons.WARNING}
               kind={kinds.WARNING}
             />
             <span className={styles.label}>No match found!</span>
-          </div>
+          </React.Fragment>
         );
       } else if (selectedAuthor && isExistingAuthor) {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
+        closedInner = (
+          <React.Fragment>
             <span className={styles.label}>{selectedAuthor.authorName}</span>
             <Label kind={kinds.WARNING}>Existing</Label>
-          </div>
+          </React.Fragment>
         );
       } else if (selectedAuthor) {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
-            <span className={styles.label}>{selectedAuthor.authorName}</span>
-          </div>
+        closedInner = (
+          <span className={styles.label}>{selectedAuthor.authorName}</span>
         );
       } else {
-        closedContent = (
-          <div className={styles.closed} onClick={this.onToggle}>
-            <span className={styles.label}>&nbsp;</span>
-          </div>
+        closedInner = (
+          <span className={styles.label}>&nbsp;</span>
         );
       }
 
-      return closedContent;
+      return (
+        <div ref={this._containerRef} className={styles.closed} onClick={this.onToggle}>
+          {closedInner}
+        </div>
+      );
     }
 
     // Open state rendering — search input + results list
+    const resultsClass = openAbove ? styles.resultsAbove : styles.results;
+
     return (
-      <div className={styles.container}>
+      <div className={styles.container} ref={this._containerRef}>
         <div className={styles.searchRow}>
           <TextInput
             className={styles.searchInput}
@@ -156,7 +184,7 @@ class ImportAuthorSelectAuthor extends Component {
           </button>
         </div>
 
-        <div className={styles.results}>
+        <div className={resultsClass}>
           {
             isFetching ?
               <div className={styles.resultItem}>
@@ -218,7 +246,9 @@ ImportAuthorSelectAuthor.propTypes = {
   isQueued: PropTypes.bool.isRequired,
   isExistingAuthor: PropTypes.bool,
   error: PropTypes.object,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  onOpen: PropTypes.func,
+  onClose: PropTypes.func
 };
 
 export default ImportAuthorSelectAuthor;

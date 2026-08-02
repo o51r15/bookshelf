@@ -17,8 +17,24 @@ import styles from './LibraryImportRow.css';
 
 class LibraryImportRow extends Component {
 
+  constructor(props, context) {
+    super(props, context);
+
+    this.state = {
+      isAuthorSelectOpen: false
+    };
+  }
+
   //
   // Listeners
+
+  onAuthorSelectOpen = () => {
+    this.setState({ isAuthorSelectOpen: true });
+  };
+
+  onAuthorSelectClose = () => {
+    this.setState({ isAuthorSelectOpen: false });
+  };
 
   onQualityProfileChange = ({ value }) => {
     this.props.onInputChange(this.props.id, 'qualityProfileId', value);
@@ -55,9 +71,10 @@ class LibraryImportRow extends Component {
     } = this.props;
 
     const isSelectable = selectedAuthor && !isExistingAuthor;
+    const { isAuthorSelectOpen } = this.state;
 
     return (
-      <TableRow>
+      <TableRow className={isAuthorSelectOpen ? styles.activeRow : undefined}>
         <TableSelectCell
           id={id}
           isSelected={isSelected}
@@ -105,6 +122,8 @@ class LibraryImportRow extends Component {
             isExistingAuthor={isExistingAuthor}
             error={error}
             onInputChange={onInputChange}
+            onOpen={this.onAuthorSelectOpen}
+            onClose={this.onAuthorSelectClose}
           />
         </TableRowCell>
       </TableRow>
