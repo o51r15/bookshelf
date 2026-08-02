@@ -1,0 +1,70 @@
+.folderPathInputContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pathInput {
+  composes: input from '~Components/Form/TextInput.css';
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.scanButton {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.recentFoldersContainer {
+  margin-bottom: 20px;
+}
+
+.filterContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filterText {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.leftButtons {
+  display: flex;
+  align-items: center;
+}
+
+.rightButtons {
+  display: flex;
+  align-items: center;
+}
+
+.importMode {
+  composes: select from '~Components/Form/SelectInput.css';
+  margin-right: 10px;
+  width: 200px;
+}
+
+.bulkSelect {
+  composes: select from '~Components/Form/SelectInput.css';
+  width: 200px;
+}
+
+.errorMessage {
+  margin-right: 10px;
+  color: var(--dangerColor);
+}
+
+.toolbar {
+  margin-bottom: 0;
+}
+
+.contentBody {
+  padding: 20px;
+}

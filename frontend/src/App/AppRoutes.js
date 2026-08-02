@@ -33,6 +33,7 @@ import Logs from 'System/Logs/Logs';
 import Status from 'System/Status/Status';
 import Tasks from 'System/Tasks/Tasks';
 import Updates from 'System/Updates/Updates';
+import LibraryImport from 'LibraryImport/LibraryImport';
 import UnmappedFilesTableConnector from 'UnmappedFiles/UnmappedFilesTableConnector';
 import getPathWithUrlBase from 'Utilities/getPathWithUrlBase';
 import CutoffUnmetConnector from 'Wanted/CutoffUnmet/CutoffUnmetConnector';
@@ -97,6 +98,11 @@ function AppRoutes(props) {
       <Route
         path="/unmapped"
         component={UnmappedFilesTableConnector}
+      />
+
+      <Route
+        path="/import"
+        component={LibraryImport}
       />
 
       <Route
