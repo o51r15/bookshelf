@@ -14,12 +14,9 @@ import MenuContent from 'Components/Menu/MenuContent';
 import SelectedMenuItem from 'Components/Menu/SelectedMenuItem';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
-import PageToolbar from 'Components/Page/Toolbar/PageToolbar';
-import PageToolbarButton from 'Components/Page/Toolbar/PageToolbarButton';
-import PageToolbarSection from 'Components/Page/Toolbar/PageToolbarSection';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
-import { align, icons, kinds } from 'Helpers/Props';
+import { align, icons, kinds, scrollDirections } from 'Helpers/Props';
 import * as commandNames from 'Commands/commandNames';
 import { executeCommand } from 'Store/Actions/commandActions';
 import {
@@ -488,87 +485,9 @@ class LibraryImport extends Component {
     ];
 
     return (
-      <PageContent title="Library Import">
-        <PageToolbar>
-          <PageToolbarSection>
-            <PageToolbarButton
-              label="Scan"
-              iconName={icons.REFRESH}
-              isDisabled={!folder}
-              onPress={this.onScanPress}
-            />
-          </PageToolbarSection>
-
-          <PageToolbarSection alignContent={align.RIGHT}>
-            <Menu alignMenu={align.RIGHT}>
-              <MenuButton>
-                <Icon
-                  name={icons.FILTER}
-                  size={22}
-                />
-
-                <div className={styles.filterText}>
-                  {
-                    filterExistingFiles ? 'Unmapped Files Only' : 'All Files'
-                  }
-                </div>
-              </MenuButton>
-
-              <MenuContent>
-                <SelectedMenuItem
-                  name={filterExistingFilesOptions.ALL}
-                  isSelected={!filterExistingFiles}
-                  onPress={this.onFilterExistingFilesChange}
-                >
-                  All Files
-                </SelectedMenuItem>
-
-                <SelectedMenuItem
-                  name={filterExistingFilesOptions.NEW}
-                  isSelected={filterExistingFiles}
-                  onPress={this.onFilterExistingFilesChange}
-                >
-                  Unmapped Files Only
-                </SelectedMenuItem>
-              </MenuContent>
-            </Menu>
-
-            <Menu alignMenu={align.RIGHT}>
-              <MenuButton>
-                <Icon
-                  name={icons.CLONE}
-                  size={22}
-                />
-
-                <div className={styles.filterText}>
-                  {
-                    replaceExistingFiles ? 'Replace existing files' : 'Combine with existing files'
-                  }
-                </div>
-              </MenuButton>
-
-              <MenuContent>
-                <SelectedMenuItem
-                  name={replaceExistingFilesOptions.COMBINE}
-                  isSelected={!replaceExistingFiles}
-                  onPress={this.onReplaceExistingFilesChange}
-                >
-                  Combine With Existing Files
-                </SelectedMenuItem>
-
-                <SelectedMenuItem
-                  name={replaceExistingFilesOptions.DELETE}
-                  isSelected={replaceExistingFiles}
-                  onPress={this.onReplaceExistingFilesChange}
-                >
-                  Replace Existing Files
-                </SelectedMenuItem>
-              </MenuContent>
-            </Menu>
-          </PageToolbarSection>
-        </PageToolbar>
-
+      <PageContent title={`Library Import${isScanned && folder ? ` - ${folder}` : ''}`}>
         <PageContentBody>
+          {/* Folder selection */}
           <div className={styles.folderPathInputContainer}>
             <PathInputConnector
               name="folder"
@@ -582,14 +501,13 @@ class LibraryImport extends Component {
               isDisabled={!folder}
               onPress={this.onScanPress}
             >
-              <Icon
-                name={icons.REFRESH}
-              />
+              <Icon name={icons.REFRESH} />
               &nbsp;
               Scan
             </Button>
           </div>
 
+          {/* Recent folders when no scan active */}
           {
             !!recentFolders.length && !isScanned &&
               <div className={styles.recentFoldersContainer}>
@@ -613,93 +531,173 @@ class LibraryImport extends Component {
               </div>
           }
 
+          {/* Filters - Sonarr style, inline above table */}
+          {
+            isScanned &&
+              <div className={styles.filterContainer}>
+                <Menu alignMenu={align.RIGHT}>
+                  <MenuButton>
+                    <Icon
+                      name={icons.FILTER}
+                      size={22}
+                    />
+
+                    <div className={styles.filterText}>
+                      {
+                        filterExistingFiles ? 'Unmapped Files Only' : 'All Files'
+                      }
+                    </div>
+                  </MenuButton>
+
+                  <MenuContent>
+                    <SelectedMenuItem
+                      name={filterExistingFilesOptions.ALL}
+                      isSelected={!filterExistingFiles}
+                      onPress={this.onFilterExistingFilesChange}
+                    >
+                      All Files
+                    </SelectedMenuItem>
+
+                    <SelectedMenuItem
+                      name={filterExistingFilesOptions.NEW}
+                      isSelected={filterExistingFiles}
+                      onPress={this.onFilterExistingFilesChange}
+                    >
+                      Unmapped Files Only
+                    </SelectedMenuItem>
+                  </MenuContent>
+                </Menu>
+
+                <Menu alignMenu={align.RIGHT}>
+                  <MenuButton>
+                    <Icon
+                      name={icons.CLONE}
+                      size={22}
+                    />
+
+                    <div className={styles.filterText}>
+                      {
+                        replaceExistingFiles ? 'Replace existing files' : 'Combine with existing files'
+                      }
+                    </div>
+                  </MenuButton>
+
+                  <MenuContent>
+                    <SelectedMenuItem
+                      name={replaceExistingFilesOptions.COMBINE}
+                      isSelected={!replaceExistingFiles}
+                      onPress={this.onReplaceExistingFilesChange}
+                    >
+                      Combine With Existing Files
+                    </SelectedMenuItem>
+
+                    <SelectedMenuItem
+                      name={replaceExistingFilesOptions.DELETE}
+                      isSelected={replaceExistingFiles}
+                      onPress={this.onReplaceExistingFilesChange}
+                    >
+                      Replace Existing Files
+                    </SelectedMenuItem>
+                  </MenuContent>
+                </Menu>
+              </div>
+          }
+
+          {/* Loading */}
           {
             isFetching &&
               <LoadingIndicator />
           }
 
+          {/* Error */}
           {
             error &&
               <div>{errorMessage}</div>
           }
 
+          {/* Import table */}
           {
             isPopulated && isScanned && !!items.length && !isFetching &&
-              <div>
-                <div className={styles.footer}>
-                  <div className={styles.leftButtons}>
-                    <SelectInput
-                      className={styles.importMode}
-                      name="importMode"
-                      value={importMode}
-                      values={importModeOptions}
-                      onChange={this.onImportModeChange}
-                    />
-
-                    <SelectInput
-                      className={styles.bulkSelect}
-                      name="select"
-                      value={SELECT}
-                      values={bulkSelectOptions}
-                      isDisabled={!selectedIds.length}
-                      onChange={this.onSelectModalSelect}
-                    />
-                  </div>
-
-                  <div className={styles.rightButtons}>
-                    {
-                      interactiveImportErrorMessage &&
-                        <span className={styles.errorMessage}>{interactiveImportErrorMessage}</span>
-                    }
-
-                    <Button
-                      kind={kinds.SUCCESS}
-                      isDisabled={isSaving || !selectedIds.length || !!invalidRowsSelected.length || inconsistentBookReleases}
-                      onPress={this.onImportSelectedPress}
-                    >
-                      Import
-                    </Button>
-                  </div>
-                </div>
-
-                <Table
-                  columns={columns}
-                  horizontalScroll={true}
-                  selectAll={true}
-                  allSelected={allSelected}
-                  allUnselected={allUnselected}
-                  sortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSortPress={this.onSortPress}
-                  onSelectAllChange={this.onSelectAllChange}
-                >
-                  <TableBody>
-                    {
-                      items.map((item) => {
-                        return (
-                          <InteractiveImportRow
-                            key={item.id}
-                            isSelected={selectedState[item.id]}
-                            isSaving={isSaving}
-                            {...item}
-                            allowAuthorChange={true}
-                            columns={columns}
-                            onSelectedChange={this.onSelectedChange}
-                            onValidRowChange={this.onValidRowChange}
-                          />
-                        );
-                      })
-                    }
-                  </TableBody>
-                </Table>
-              </div>
+              <Table
+                columns={columns}
+                horizontalScroll={true}
+                selectAll={true}
+                allSelected={allSelected}
+                allUnselected={allUnselected}
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSortPress={this.onSortPress}
+                onSelectAllChange={this.onSelectAllChange}
+              >
+                <TableBody>
+                  {
+                    items.map((item) => {
+                      return (
+                        <InteractiveImportRow
+                          key={item.id}
+                          isSelected={selectedState[item.id]}
+                          isSaving={isSaving}
+                          {...item}
+                          allowAuthorChange={true}
+                          columns={columns}
+                          onSelectedChange={this.onSelectedChange}
+                          onValidRowChange={this.onValidRowChange}
+                        />
+                      );
+                    })
+                  }
+                </TableBody>
+              </Table>
           }
 
+          {/* No results */}
           {
             isPopulated && isScanned && !items.length && !isFetching &&
-              'No book files were found in the selected folder'
+              <div className={styles.noResults}>
+                No book files were found in the selected folder
+              </div>
           }
         </PageContentBody>
+
+        {/* Sonarr-style sticky footer with controls */}
+        {
+          isScanned && isPopulated && !!items.length && !isFetching &&
+            <div className={styles.footer}>
+              <div className={styles.leftButtons}>
+                <SelectInput
+                  className={styles.importMode}
+                  name="importMode"
+                  value={importMode}
+                  values={importModeOptions}
+                  onChange={this.onImportModeChange}
+                />
+
+                <SelectInput
+                  className={styles.bulkSelect}
+                  name="select"
+                  value={SELECT}
+                  values={bulkSelectOptions}
+                  isDisabled={!selectedIds.length}
+                  onChange={this.onSelectModalSelect}
+                />
+              </div>
+
+              <div className={styles.rightButtons}>
+                {
+                  interactiveImportErrorMessage &&
+                    <span className={styles.errorMessage}>{interactiveImportErrorMessage}</span>
+                }
+
+                <Button
+                  kind={kinds.SUCCESS}
+                  isDisabled={isSaving || !selectedIds.length || !!invalidRowsSelected.length || inconsistentBookReleases}
+                  onPress={this.onImportSelectedPress}
+                >
+                  Import
+                </Button>
+              </div>
+            </div>
+        }
 
         <SelectAuthorModal
           isOpen={selectModalOpen === AUTHOR}
