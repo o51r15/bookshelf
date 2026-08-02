@@ -28,12 +28,15 @@
 
 .container {
   position: relative;
+  z-index: 20;
 }
 
 .searchRow {
   display: flex;
   align-items: center;
   gap: 5px;
+  background-color: var(--tableBackgroundColor);
+  padding: 2px 0;
 }
 
 .searchInput {
@@ -56,16 +59,16 @@
 
 .results {
   position: absolute;
-  z-index: 10;
+  z-index: 30;
   top: 100%;
   left: 0;
   right: 0;
   max-height: 250px;
   overflow-y: auto;
-  background: var(--tableBackgroundColor);
+  background-color: var(--tableBackgroundColor);
   border: 1px solid var(--borderColor);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .resultItem {

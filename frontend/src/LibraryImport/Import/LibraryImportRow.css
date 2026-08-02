@@ -17,4 +17,6 @@
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
 
   min-width: 250px;
+  overflow: visible;
+  position: relative;
 }
