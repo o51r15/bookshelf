@@ -200,8 +200,11 @@ class LibraryImportScan extends Component {
 
         files.push({
           path: item.path,
-          authorId: author.id,
-          bookId: book.id,
+          authorId: author.id || 0,
+          bookId: book.id || 0,
+          author,
+          book,
+          foreignAuthorId: author.foreignAuthorId,
           foreignEditionId,
           quality,
           indexerFlags,

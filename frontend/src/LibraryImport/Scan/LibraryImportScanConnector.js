@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
@@ -12,6 +13,7 @@ import {
 import { fetchMetadataProfiles } from 'Store/Actions/Settings/metadataProfiles';
 import { fetchQualityProfiles } from 'Store/Actions/Settings/qualityProfiles';
 import { fetchRootFolders } from 'Store/Actions/Settings/rootFolders';
+import createAjaxRequest from 'Utilities/createAjaxRequest';
 import createClientSideCollectionSelector from 'Store/Selectors/createClientSideCollectionSelector';
 import LibraryImportScan from './LibraryImportScan';
 
@@ -83,10 +85,132 @@ class LibraryImportScanConnector extends Component {
     this.props.clearInteractiveImport();
   };
 
+  addAuthor = (authorData, rootFolderPath, qualityProfileId, metadataProfileId, monitorNewItems) => {
+    const newAuthor = {
+      ...authorData,
+      rootFolderPath,
+      qualityProfileId,
+      metadataProfileId,
+      monitored: true,
+      monitorNewItems: monitorNewItems || 'all',
+      addOptions: {
+        monitor: 'all',
+        searchForMissingBooks: false
+      },
+      tags: []
+    };
+
+    return createAjaxRequest({
+      url: '/author',
+      method: 'POST',
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify(newAuthor)
+    }).request;
+  };
+
   onImportPress = (files) => {
+    const { rootFolderPath } = this.props;
+
+    // Separate files into existing authors (have DB id) and new authors (need to be added)
+    const existingAuthorFiles = files.filter((f) => f.authorId > 0 && f.bookId > 0);
+    const newAuthorFiles = files.filter((f) => !f.authorId || !f.bookId);
+
+    if (!newAuthorFiles.length) {
+      // All authors exist, import directly
+      this.executeImport(existingAuthorFiles);
+      return;
+    }
+
+    // Group new author files by foreignAuthorId to avoid adding the same author twice
+    const authorGroups = _.groupBy(newAuthorFiles, 'foreignAuthorId');
+    const addPromises = [];
+
+    _.forEach(authorGroups, (groupFiles, foreignAuthorId) => {
+      const firstFile = groupFiles[0];
+
+      const promise = this.addAuthor(
+        firstFile.author,
+        rootFolderPath,
+        firstFile.qualityProfileId,
+        firstFile.metadataProfileId,
+        firstFile.monitor
+      );
+
+      addPromises.push(
+        promise.then((addedAuthor) => {
+          // After adding author, fetch their books to find matching book IDs
+          return createAjaxRequest({
+            url: `/author/${addedAuthor.id}`,
+            method: 'GET',
+            dataType: 'json'
+          }).request.then((fullAuthor) => {
+            // Also fetch the author's books
+            return createAjaxRequest({
+              url: `/book?authorId=${addedAuthor.id}`,
+              method: 'GET',
+              dataType: 'json'
+            }).request.then((books) => {
+              // Match each file's book by foreignEditionId or title
+              groupFiles.forEach((file) => {
+                file.authorId = addedAuthor.id;
+
+                // Try to match by foreignEditionId
+                const matchedBook = books.find((b) => {
+                  if (b.editions && b.editions.length) {
+                    return b.editions.some((e) => e.foreignEditionId === file.foreignEditionId);
+                  }
+
+                  return false;
+                });
+
+                if (matchedBook) {
+                  file.bookId = matchedBook.id;
+                } else {
+                  // Fallback: match by title
+                  const titleMatch = books.find((b) =>
+                    b.title && file.book && b.title.toLowerCase() === file.book.title.toLowerCase()
+                  );
+
+                  if (titleMatch) {
+                    file.bookId = titleMatch.id;
+                  }
+                }
+              });
+            });
+          });
+        })
+      );
+    });
+
+    // Wait for all authors to be added, then import all files
+    Promise.all(addPromises).then(() => {
+      const allFiles = existingAuthorFiles.concat(newAuthorFiles);
+      const validFiles = allFiles.filter((f) => f.authorId > 0 && f.bookId > 0);
+
+      if (validFiles.length) {
+        this.executeImport(validFiles);
+      }
+    }).catch((error) => {
+      console.error('Failed to add authors for import:', error);
+    });
+  };
+
+  executeImport = (files) => {
+    // Strip extra fields that the backend doesn't need
+    const importFiles = files.map((f) => ({
+      path: f.path,
+      authorId: f.authorId,
+      bookId: f.bookId,
+      foreignEditionId: f.foreignEditionId,
+      quality: f.quality,
+      indexerFlags: f.indexerFlags || 0,
+      disableReleaseSwitching: f.disableReleaseSwitching || false
+    }));
+
     this.props.executeCommand({
       name: commandNames.INTERACTIVE_IMPORT,
-      files,
+      files: importFiles,
       importMode: 'auto',
       replaceExistingFiles: false
     });
