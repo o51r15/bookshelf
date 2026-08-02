@@ -256,7 +256,8 @@ class LibraryImport extends Component {
     this.props.fetchInteractiveImportItems({
       folder,
       filterExistingFiles,
-      replaceExistingFiles
+      replaceExistingFiles,
+      addNewAuthors: true
     });
 
     this.setState({

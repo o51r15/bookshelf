@@ -26,7 +26,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
 {
     public interface IManualImportService
     {
-        List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles);
+        List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, bool addNewAuthors = false);
         List<ManualImportItem> UpdateItems(List<ManualImportItem> item);
     }
 
@@ -87,7 +87,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             _logger = logger;
         }
 
-        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles)
+        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, bool addNewAuthors = false)
         {
             if (downloadId.IsNotNullOrWhiteSpace())
             {
@@ -121,7 +121,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     NewDownload = true,
                     SingleRelease = false,
                     IncludeExisting = !replaceExistingFiles,
-                    AddNewAuthors = false,
+                    AddNewAuthors = addNewAuthors,
                     KeepAllEditions = true
                 };
 
@@ -131,10 +131,10 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 return new List<ManualImportItem> { result };
             }
 
-            return ProcessFolder(path, downloadId, author, filter, replaceExistingFiles);
+            return ProcessFolder(path, downloadId, author, filter, replaceExistingFiles, addNewAuthors);
         }
 
-        private List<ManualImportItem> ProcessFolder(string folder, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles)
+        private List<ManualImportItem> ProcessFolder(string folder, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, bool addNewAuthors = false)
         {
             DownloadClientItem downloadClientItem = null;
             var directoryInfo = new DirectoryInfo(folder);
@@ -167,7 +167,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 NewDownload = true,
                 SingleRelease = false,
                 IncludeExisting = !replaceExistingFiles,
-                AddNewAuthors = false,
+                AddNewAuthors = addNewAuthors,
                 KeepAllEditions = true
             };
 
