@@ -2,9 +2,9 @@ import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
+import MetadataProfileSelectInputConnector from 'Components/Form/MetadataProfileSelectInputConnector';
+import QualityProfileSelectInputConnector from 'Components/Form/QualityProfileSelectInputConnector';
 import SelectInput from 'Components/Form/SelectInput';
-import Icon from 'Components/Icon';
-import Button from 'Components/Link/Button';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
@@ -12,16 +12,9 @@ import PageContentBody from 'Components/Page/PageContentBody';
 import PageContentFooter from 'Components/Page/PageContentFooter';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
-import { icons, kinds } from 'Helpers/Props';
-import InteractiveImportRow from 'InteractiveImport/Interactive/InteractiveImportRow';
-import SelectAuthorModal from 'InteractiveImport/Author/SelectAuthorModal';
-import SelectBookModal from 'InteractiveImport/Book/SelectBookModal';
-import SelectEditionModal from 'InteractiveImport/Edition/SelectEditionModal';
-import SelectIndexerFlagsModal from 'InteractiveImport/IndexerFlags/SelectIndexerFlagsModal';
-import SelectQualityModal from 'InteractiveImport/Quality/SelectQualityModal';
-import SelectReleaseGroupModal from 'InteractiveImport/ReleaseGroup/SelectReleaseGroupModal';
-import ConfirmImportModal from 'InteractiveImport/Confirmation/ConfirmImportModal';
-import * as commandNames from 'Commands/commandNames';
+import { kinds } from 'Helpers/Props';
+import LibraryImportRow from './LibraryImportRow';
+import monitorNewItemsOptions from 'Utilities/Author/monitorNewItemsOptions';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
@@ -32,52 +25,31 @@ import styles from './LibraryImportScan.css';
 const COLUMNS = [
   {
     name: 'path',
-    label: 'Path',
+    label: 'File',
     isSortable: true,
     isVisible: true
   },
   {
-    name: 'author',
-    label: 'Author',
-    isSortable: true,
+    name: 'qualityProfileId',
+    label: 'Quality Profile',
     isVisible: true
   },
   {
-    name: 'book',
-    label: 'Book',
+    name: 'metadataProfileId',
+    label: 'Metadata Profile',
     isVisible: true
   },
   {
-    name: 'quality',
-    label: 'Quality',
-    isSortable: true,
+    name: 'monitor',
+    label: 'Monitor',
     isVisible: true
   },
   {
-    name: 'size',
-    label: 'Size',
-    isSortable: true,
-    isVisible: true
-  },
-  {
-    name: 'rejections',
-    label: () => React.createElement(Icon, {
-      name: icons.DANGER,
-      kind: kinds.DANGER,
-      title: () => translate('Rejections')
-    }),
-    isSortable: true,
+    name: 'authorBook',
+    label: 'Author / Book',
     isVisible: true
   }
 ];
-
-const SELECT = 'select';
-const AUTHOR = 'author';
-const BOOK = 'book';
-const EDITION = 'edition';
-const RELEASE_GROUP = 'releaseGroup';
-const QUALITY = 'quality';
-const INDEXER_FLAGS = 'indexerFlags';
 
 class LibraryImportScan extends Component {
 
@@ -92,8 +64,7 @@ class LibraryImportScan extends Component {
       allUnselected: false,
       lastToggled: null,
       selectedState: {},
-      invalidRowsSelected: [],
-      selectModalOpen: null,
+      rowOptions: {},
       isConfirmImportModalOpen: false,
       booksImported: [],
       interactiveImportErrorMessage: null
@@ -102,6 +73,9 @@ class LibraryImportScan extends Component {
 
   componentDidMount() {
     const { rootFolderPath } = this.props;
+
+    this.props.fetchQualityProfiles();
+    this.props.fetchMetadataProfiles();
 
     if (rootFolderPath) {
       this.props.onScanPress(rootFolderPath);
@@ -125,6 +99,26 @@ class LibraryImportScan extends Component {
     return getSelectedIds(this.state.selectedState);
   };
 
+  getRowOptions = (id) => {
+    const { defaultQualityProfileId, defaultMetadataProfileId } = this.props;
+
+    return this.state.rowOptions[id] || {
+      qualityProfileId: defaultQualityProfileId,
+      metadataProfileId: defaultMetadataProfileId,
+      monitor: 'all'
+    };
+  };
+
+  getRelativePath = (path) => {
+    const { rootFolderPath } = this.props;
+
+    if (rootFolderPath && path && path.indexOf(rootFolderPath) === 0) {
+      return path.substring(rootFolderPath.length).replace(/^[/\\]/, '');
+    }
+
+    return path;
+  };
+
   //
   // Listeners
 
@@ -138,25 +132,43 @@ class LibraryImportScan extends Component {
     });
   };
 
-  onValidRowChange = (id, isValid) => {
-    this.setState((state, props) => {
-      const diff = _.difference(state.invalidRowsSelected, _.map(props.items, 'id'));
-      const currentInvalid = _.difference(state.invalidRowsSelected, diff);
-      const newstate = isValid ? _.without(currentInvalid, id) : _.union(currentInvalid, [id]);
-      return { invalidRowsSelected: newstate };
-    });
-  };
-
   onSortPress = (sortKey, sortDirection) => {
     this.props.onSortPress(sortKey, sortDirection);
   };
 
-  onSelectModalSelect = ({ value }) => {
-    this.setState({ selectModalOpen: value });
+  onRowOptionsChange = (id, changes) => {
+    this.setState((state) => {
+      const rowOptions = Object.assign({}, state.rowOptions);
+      rowOptions[id] = Object.assign({}, this.getRowOptions(id), changes);
+
+      return { rowOptions };
+    });
   };
 
-  onSelectModalClose = () => {
-    this.setState({ selectModalOpen: null });
+  onFooterQualityProfileChange = ({ value }) => {
+    this.applyToSelected({ qualityProfileId: value });
+  };
+
+  onFooterMetadataProfileChange = ({ value }) => {
+    this.applyToSelected({ metadataProfileId: value });
+  };
+
+  onFooterMonitorChange = ({ value }) => {
+    this.applyToSelected({ monitor: value });
+  };
+
+  applyToSelected = (changes) => {
+    const selected = this.getSelectedIds();
+
+    this.setState((state) => {
+      const rowOptions = Object.assign({}, state.rowOptions);
+
+      selected.forEach((id) => {
+        rowOptions[id] = Object.assign({}, this.getRowOptions(id), changes);
+      });
+
+      return { rowOptions };
+    });
   };
 
   onImportSelectedPress = () => {
@@ -184,10 +196,7 @@ class LibraryImportScan extends Component {
           return false;
         }
 
-        if (!quality) {
-          this.setState({ interactiveImportErrorMessage: 'Quality must be chosen for each selected file' });
-          return false;
-        }
+        const { qualityProfileId, metadataProfileId, monitor } = this.getRowOptions(item.id);
 
         files.push({
           path: item.path,
@@ -196,7 +205,10 @@ class LibraryImportScan extends Component {
           foreignEditionId,
           quality,
           indexerFlags,
-          disableReleaseSwitching
+          disableReleaseSwitching,
+          qualityProfileId,
+          metadataProfileId,
+          monitor
         });
       }
     });
@@ -225,35 +237,33 @@ class LibraryImportScan extends Component {
       error,
       items,
       sortKey,
-      sortDirection
+      sortDirection,
+      defaultQualityProfileId,
+      defaultMetadataProfileId
     } = this.props;
 
     const {
       allSelected,
       allUnselected,
       selectedState,
-      invalidRowsSelected,
-      selectModalOpen,
-      booksImported,
       isConfirmImportModalOpen,
       interactiveImportErrorMessage
     } = this.state;
 
     const selectedIds = this.getSelectedIds();
-    const selectedItem = selectedIds.length ? _.find(items, { id: selectedIds[0] }) : null;
-    const importIdsByBook = _.chain(items).filter((x) => x.book).groupBy((x) => x.book.id).mapValues((x) => x.map((y) => y.id)).value();
-    const editions = _.chain(items).filter((x) => x.book).keyBy((x) => x.book.id).mapValues((x) => ({ matchedEditionId: x.foreignEditionId, book: x.book })).values().value();
     const errorMessage = getErrorMessage(error, 'Unable to load files');
 
-    const bulkSelectOptions = [
-      { key: SELECT, value: translate('SelectDropdown'), disabled: true },
-      { key: AUTHOR, value: 'Select Author' },
-      { key: BOOK, value: translate('SelectBook') },
-      { key: EDITION, value: translate('SelectEdition') },
-      { key: QUALITY, value: translate('SelectQuality') },
-      { key: RELEASE_GROUP, value: translate('SelectReleaseGroup') },
-      { key: INDEXER_FLAGS, value: translate('SelectIndexerFlags') }
-    ];
+    const footerQualityProfileId = selectedIds.length ?
+      this.getRowOptions(selectedIds[0]).qualityProfileId :
+      defaultQualityProfileId;
+
+    const footerMetadataProfileId = selectedIds.length ?
+      this.getRowOptions(selectedIds[0]).metadataProfileId :
+      defaultMetadataProfileId;
+
+    const footerMonitor = selectedIds.length ?
+      this.getRowOptions(selectedIds[0]).monitor :
+      'all';
 
     return (
       <PageContent title={`Library Import - ${rootFolderPath || ''}`}>
@@ -296,16 +306,21 @@ class LibraryImportScan extends Component {
                 <TableBody>
                   {
                     items.map((item) => {
+                      const rowOptions = this.getRowOptions(item.id);
+
                       return (
-                        <InteractiveImportRow
+                        <LibraryImportRow
                           key={item.id}
                           isSelected={selectedState[item.id]}
                           isSaving={isSaving}
                           {...item}
+                          relativePath={this.getRelativePath(item.path)}
+                          qualityProfileId={rowOptions.qualityProfileId}
+                          metadataProfileId={rowOptions.metadataProfileId}
+                          monitor={rowOptions.monitor}
                           allowAuthorChange={true}
-                          columns={COLUMNS}
                           onSelectedChange={this.onSelectedChange}
-                          onValidRowChange={this.onValidRowChange}
+                          onRowOptionsChange={this.onRowOptionsChange}
                         />
                       );
                     })
@@ -318,94 +333,69 @@ class LibraryImportScan extends Component {
 
         {
           !isFetching && isPopulated && !!items.length ?
-            <PageContentFooter>
-              <div className={styles.inputContainer}>
-                <div className={styles.label}>
-                  Bulk Actions
+            <PageContentFooter className={styles.footer}>
+                <div className={styles.inputContainer}>
+                  <div className={styles.label}>
+                    {translate('QualityProfile')}
+                  </div>
+
+                  <QualityProfileSelectInputConnector
+                    name="qualityProfileId"
+                    value={footerQualityProfileId}
+                    isDisabled={!selectedIds.length}
+                    onChange={this.onFooterQualityProfileChange}
+                  />
                 </div>
 
-                <SelectInput
-                  className={styles.bulkSelect}
-                  name="select"
-                  value={SELECT}
-                  values={bulkSelectOptions}
-                  isDisabled={!selectedIds.length}
-                  onChange={this.onSelectModalSelect}
-                />
-              </div>
+                <div className={styles.inputContainer}>
+                  <div className={styles.label}>
+                    {translate('MetadataProfile')}
+                  </div>
 
-              <div className={styles.importButtonContainer}>
-                {
-                  interactiveImportErrorMessage ?
-                    <span className={styles.errorMessage}>
-                      {interactiveImportErrorMessage}
-                    </span> :
-                    null
-                }
+                  <MetadataProfileSelectInputConnector
+                    name="metadataProfileId"
+                    value={footerMetadataProfileId}
+                    isDisabled={!selectedIds.length}
+                    onChange={this.onFooterMetadataProfileChange}
+                  />
+                </div>
 
-                <SpinnerButton
-                  className={styles.importButton}
-                  kind={kinds.PRIMARY}
-                  isSpinning={isSaving}
-                  isDisabled={!selectedIds.length || !!invalidRowsSelected.length}
-                  onPress={this.onImportSelectedPress}
-                >
-                  {`Import ${selectedIds.length} Book${selectedIds.length !== 1 ? 's' : ''}`}
-                </SpinnerButton>
-              </div>
+                <div className={styles.inputContainer}>
+                  <div className={styles.label}>
+                    Monitor
+                  </div>
+
+                  <SelectInput
+                    name="monitor"
+                    value={footerMonitor}
+                    values={monitorNewItemsOptions}
+                    isDisabled={!selectedIds.length}
+                    onChange={this.onFooterMonitorChange}
+                  />
+                </div>
+
+                <div className={styles.importButtonContainer}>
+                  {
+                    interactiveImportErrorMessage ?
+                      <span className={styles.errorMessage}>
+                        {interactiveImportErrorMessage}
+                      </span> :
+                      null
+                  }
+
+                  <SpinnerButton
+                    className={styles.importButton}
+                    kind={kinds.SUCCESS}
+                    isSpinning={isSaving}
+                    isDisabled={!selectedIds.length}
+                    onPress={this.onImportSelectedPress}
+                  >
+                    {`Import ${selectedIds.length} Book${selectedIds.length !== 1 ? 's' : ''}`}
+                  </SpinnerButton>
+                </div>
             </PageContentFooter> :
             null
         }
-
-        <SelectAuthorModal
-          isOpen={selectModalOpen === AUTHOR}
-          ids={selectedIds}
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <SelectBookModal
-          isOpen={selectModalOpen === BOOK}
-          ids={selectedIds}
-          authorId={selectedItem && selectedItem.author && selectedItem.author.id}
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <SelectEditionModal
-          isOpen={selectModalOpen === EDITION}
-          importIdsByBook={importIdsByBook}
-          books={editions}
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <SelectReleaseGroupModal
-          isOpen={selectModalOpen === RELEASE_GROUP}
-          ids={selectedIds}
-          releaseGroup=""
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <SelectQualityModal
-          isOpen={selectModalOpen === QUALITY}
-          ids={selectedIds}
-          qualityId={0}
-          proper={false}
-          real={false}
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <SelectIndexerFlagsModal
-          isOpen={selectModalOpen === INDEXER_FLAGS}
-          ids={selectedIds}
-          indexerFlags={0}
-          onModalClose={this.onSelectModalClose}
-        />
-
-        <ConfirmImportModal
-          isOpen={isConfirmImportModalOpen}
-          books={booksImported}
-          onModalClose={() => this.setState({ isConfirmImportModalOpen: false })}
-          onConfirmImportPress={this.onConfirmImportPress}
-        />
       </PageContent>
     );
   }
@@ -420,10 +410,14 @@ LibraryImportScan.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   sortKey: PropTypes.string,
   sortDirection: PropTypes.string,
+  defaultQualityProfileId: PropTypes.number,
+  defaultMetadataProfileId: PropTypes.number,
   onScanPress: PropTypes.func.isRequired,
   onSortPress: PropTypes.func.isRequired,
   onClearImport: PropTypes.func.isRequired,
-  onImportPress: PropTypes.func.isRequired
+  onImportPress: PropTypes.func.isRequired,
+  fetchQualityProfiles: PropTypes.func.isRequired,
+  fetchMetadataProfiles: PropTypes.func.isRequired
 };
 
 export default LibraryImportScan;
