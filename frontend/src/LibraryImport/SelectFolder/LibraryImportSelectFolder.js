@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
+import Link from 'Components/Link/Link';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
 import { kinds } from 'Helpers/Props';
-import translate from 'Utilities/String/translate';
 import styles from './LibraryImportSelectFolder.css';
 
 class LibraryImportSelectFolder extends Component {
@@ -66,14 +66,10 @@ class LibraryImportSelectFolder extends Component {
                       {
                         items.map((rootFolder) => {
                           return (
-                            <a
+                            <Link
                               key={rootFolder.id}
                               className={styles.rootFolder}
-                              href={`/import/${rootFolder.id}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                this.props.onRootFolderPress(rootFolder.id);
-                              }}
+                              to={`/import/${rootFolder.id}`}
                             >
                               <div className={styles.rootFolderPath}>
                                 {rootFolder.path}
@@ -84,7 +80,7 @@ class LibraryImportSelectFolder extends Component {
                                   ''
                                 }
                               </div>
-                            </a>
+                            </Link>
                           );
                         })
                       }
@@ -117,8 +113,7 @@ LibraryImportSelectFolder.propTypes = {
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onRootFolderPress: PropTypes.func.isRequired
+  items: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
 export default LibraryImportSelectFolder;

@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
-import { push } from 'connected-react-router';
 import { fetchRootFolders } from 'Store/Actions/Settings/rootFolders';
 import LibraryImportSelectFolder from './LibraryImportSelectFolder';
 
@@ -21,8 +20,7 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  fetchRootFolders,
-  push
+  fetchRootFolders
 };
 
 class LibraryImportSelectFolderConnector extends Component {
@@ -35,28 +33,19 @@ class LibraryImportSelectFolderConnector extends Component {
   }
 
   //
-  // Listeners
-
-  onRootFolderPress = (id) => {
-    this.props.push(`/import/${id}`);
-  };
-
-  //
   // Render
 
   render() {
     return (
       <LibraryImportSelectFolder
         {...this.props}
-        onRootFolderPress={this.onRootFolderPress}
       />
     );
   }
 }
 
 LibraryImportSelectFolderConnector.propTypes = {
-  fetchRootFolders: PropTypes.func.isRequired,
-  push: PropTypes.func.isRequired
+  fetchRootFolders: PropTypes.func.isRequired
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(LibraryImportSelectFolderConnector);
