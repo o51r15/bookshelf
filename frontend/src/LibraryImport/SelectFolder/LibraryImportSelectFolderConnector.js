@@ -1,3 +1,4 @@
+import { push } from 'connected-react-router';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
@@ -20,6 +21,7 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
+  push,
   fetchRootFolders
 };
 
@@ -33,18 +35,27 @@ class LibraryImportSelectFolderConnector extends Component {
   }
 
   //
+  // Listeners
+
+  onRootFolderPress = (id) => {
+    this.props.push(`${window.Readarr.urlBase}/import/${id}`);
+  };
+
+  //
   // Render
 
   render() {
     return (
       <LibraryImportSelectFolder
         {...this.props}
+        onRootFolderPress={this.onRootFolderPress}
       />
     );
   }
 }
 
 LibraryImportSelectFolderConnector.propTypes = {
+  push: PropTypes.func.isRequired,
   fetchRootFolders: PropTypes.func.isRequired
 };
 

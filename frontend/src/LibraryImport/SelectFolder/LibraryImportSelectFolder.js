@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
-import Link from 'Components/Link/Link';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
@@ -18,7 +17,8 @@ class LibraryImportSelectFolder extends Component {
       isFetching,
       isPopulated,
       error,
-      items
+      items,
+      onRootFolderPress
     } = this.props;
 
     return (
@@ -66,10 +66,10 @@ class LibraryImportSelectFolder extends Component {
                       {
                         items.map((rootFolder) => {
                           return (
-                            <Link
+                            <div
                               key={rootFolder.id}
                               className={styles.rootFolder}
-                              to={`/import/${rootFolder.id}`}
+                              onClick={() => onRootFolderPress(rootFolder.id)}
                             >
                               <div className={styles.rootFolderPath}>
                                 {rootFolder.path}
@@ -80,7 +80,7 @@ class LibraryImportSelectFolder extends Component {
                                   ''
                                 }
                               </div>
-                            </Link>
+                            </div>
                           );
                         })
                       }
@@ -113,7 +113,8 @@ LibraryImportSelectFolder.propTypes = {
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired
+  items: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onRootFolderPress: PropTypes.func.isRequired
 };
 
 export default LibraryImportSelectFolder;
