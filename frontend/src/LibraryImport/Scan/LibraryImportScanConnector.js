@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
@@ -114,26 +115,25 @@ class LibraryImportScanConnector extends Component {
         tags: []
       };
 
-      addPromises.push(
-        createAjaxRequest({
-          url: '/author',
-          method: 'POST',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(newAuthor)
-        }).request
-      );
+      const { request } = createAjaxRequest({
+        url: '/author',
+        method: 'POST',
+        dataType: 'json',
+        contentType: 'application/json',
+        data: JSON.stringify(newAuthor)
+      });
+
+      addPromises.push(request);
     });
 
     if (!addPromises.length) {
       return;
     }
 
-    Promise.all(addPromises).then(() => {
-      // Navigate to the library after import — authors are added,
-      // backend will scan and import files in the background
+    // jQuery deferreds don't work with Promise.all — use $.when
+    $.when(...addPromises).done(() => {
       this.props.push(`${window.Readarr.urlBase}/`);
-    }).catch((error) => {
+    }).fail((error) => {
       console.error('Failed to add authors for import:', error);
     });
   };
