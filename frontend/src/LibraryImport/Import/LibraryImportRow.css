@@ -18,10 +18,11 @@
 
   min-width: 250px;
   overflow: visible;
-  position: relative;
 }
 
-.activeRow {
+.authorOpen {
+  composes: author;
+
   position: relative;
   z-index: 50;
 }

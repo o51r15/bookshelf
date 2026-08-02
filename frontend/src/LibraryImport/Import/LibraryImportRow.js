@@ -74,7 +74,7 @@ class LibraryImportRow extends Component {
     const { isAuthorSelectOpen } = this.state;
 
     return (
-      <TableRow className={isAuthorSelectOpen ? styles.activeRow : undefined}>
+      <TableRow>
         <TableSelectCell
           id={id}
           isSelected={isSelected}
@@ -111,7 +111,7 @@ class LibraryImportRow extends Component {
           />
         </TableRowCell>
 
-        <TableRowCell className={styles.author}>
+        <TableRowCell className={isAuthorSelectOpen ? styles.authorOpen : styles.author}>
           <ImportAuthorSelectAuthor
             id={id}
             selectedAuthor={selectedAuthor}
