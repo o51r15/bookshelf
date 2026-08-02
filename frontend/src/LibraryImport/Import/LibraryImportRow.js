@@ -17,23 +17,15 @@ import styles from './LibraryImportRow.css';
 
 class LibraryImportRow extends Component {
 
-  constructor(props, context) {
-    super(props, context);
-
-    this.state = {
-      isAuthorSelectOpen: false
-    };
-  }
-
   //
   // Listeners
 
   onAuthorSelectOpen = () => {
-    this.setState({ isAuthorSelectOpen: true });
+    this.props.onAuthorSelectOpen(this.props.id);
   };
 
   onAuthorSelectClose = () => {
-    this.setState({ isAuthorSelectOpen: false });
+    this.props.onAuthorSelectClose(this.props.id);
   };
 
   onQualityProfileChange = ({ value }) => {
@@ -65,13 +57,13 @@ class LibraryImportRow extends Component {
       isQueued,
       isExistingAuthor,
       isSelected,
+      isAuthorSelectOpen,
       error,
       onSelectedChange,
       onInputChange
     } = this.props;
 
     const isSelectable = selectedAuthor && !isExistingAuthor;
-    const { isAuthorSelectOpen } = this.state;
 
     return (
       <TableRow>
@@ -120,6 +112,7 @@ class LibraryImportRow extends Component {
             isFetching={isFetching}
             isQueued={isQueued}
             isExistingAuthor={isExistingAuthor}
+            isOpen={isAuthorSelectOpen}
             error={error}
             onInputChange={onInputChange}
             onOpen={this.onAuthorSelectOpen}
@@ -145,9 +138,12 @@ LibraryImportRow.propTypes = {
   isQueued: PropTypes.bool.isRequired,
   isExistingAuthor: PropTypes.bool,
   isSelected: PropTypes.bool.isRequired,
+  isAuthorSelectOpen: PropTypes.bool.isRequired,
   error: PropTypes.object,
   onSelectedChange: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  onAuthorSelectOpen: PropTypes.func.isRequired,
+  onAuthorSelectClose: PropTypes.func.isRequired
 };
 
 LibraryImportRow.defaultProps = {
@@ -158,7 +154,8 @@ LibraryImportRow.defaultProps = {
   isPopulated: false,
   isFetching: false,
   isQueued: false,
-  isSelected: false
+  isSelected: false,
+  isAuthorSelectOpen: false
 };
 
 export default LibraryImportRow;

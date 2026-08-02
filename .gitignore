@@ -1,3 +1,10 @@
+# Project docs and lock files
+CLAUDE.md
+DEPLOYMENT.md
+LIBRARY_IMPORT_PLAN.md
+docs/.~lock.*
+docs/Metadata_Comparison_Audiobookshelf_vs_Bookshelf.pdf
+
 # Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
 src/**/[Bb]in/
 src/**/[Oo]bj/

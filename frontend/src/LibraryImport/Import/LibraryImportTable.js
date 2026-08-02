@@ -54,7 +54,8 @@ class LibraryImportTable extends Component {
     this.state = {
       allSelected: false,
       allUnselected: true,
-      selectedState: {}
+      selectedState: {},
+      openAuthorSelectId: null
     };
   }
 
@@ -100,6 +101,19 @@ class LibraryImportTable extends Component {
     });
   };
 
+  onAuthorSelectOpen = (id) => {
+    this.setState({ openAuthorSelectId: id });
+  };
+
+  onAuthorSelectClose = (id) => {
+    this.setState((state) => {
+      if (state.openAuthorSelectId === id) {
+        return { openAuthorSelectId: null };
+      }
+      return null;
+    });
+  };
+
   onImportPress = () => {
     const selectedIds = Object.keys(this.state.selectedState)
       .filter((id) => this.state.selectedState[id]);
@@ -126,7 +140,8 @@ class LibraryImportTable extends Component {
     const {
       allSelected,
       allUnselected,
-      selectedState
+      selectedState,
+      openAuthorSelectId
     } = this.state;
 
     const selectedCount = Object.values(selectedState).filter(Boolean).length;
@@ -196,9 +211,12 @@ class LibraryImportTable extends Component {
                             isQueued={item.isQueued}
                             isExistingAuthor={isExistingAuthor}
                             isSelected={selectedState[item.id] || false}
+                            isAuthorSelectOpen={openAuthorSelectId === item.id}
                             error={item.error}
                             onSelectedChange={this.onSelectedChange}
                             onInputChange={onInputChange}
+                            onAuthorSelectOpen={this.onAuthorSelectOpen}
+                            onAuthorSelectClose={this.onAuthorSelectClose}
                           />
                         );
                       })

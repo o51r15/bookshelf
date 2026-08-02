@@ -17,7 +17,6 @@ class ImportAuthorSelectAuthor extends Component {
     super(props, context);
 
     this.state = {
-      isOpen: false,
       openAbove: false,
       searchTerm: props.id || ''
     };
@@ -36,29 +35,30 @@ class ImportAuthorSelectAuthor extends Component {
   // Listeners
 
   onToggle = () => {
-    this.setState((state) => {
-      const willOpen = !state.isOpen;
+    const willOpen = !this.props.isOpen;
 
-      if (willOpen && this.props.onOpen) {
-        this.props.onOpen();
-      } else if (!willOpen && this.props.onClose) {
-        this.props.onClose();
-      }
+    if (willOpen) {
+      let openAbove = false;
 
-      let openAbove = state.openAbove;
-
-      if (willOpen && this._containerRef.current) {
+      if (this._containerRef.current) {
         const rect = this._containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
         openAbove = spaceBelow < 280;
       }
 
-      return {
-        isOpen: willOpen,
+      this.setState({
         openAbove,
-        searchTerm: state.isOpen ? state.searchTerm : (this.props.id || '')
-      };
-    });
+        searchTerm: this.props.id || ''
+      });
+
+      if (this.props.onOpen) {
+        this.props.onOpen();
+      }
+    } else {
+      if (this.props.onClose) {
+        this.props.onClose();
+      }
+    }
   };
 
   onSearchChange = ({ value }) => {
@@ -75,7 +75,6 @@ class ImportAuthorSelectAuthor extends Component {
 
   onAuthorSelect = (author) => {
     this.props.onInputChange(this.props.id, 'selectedAuthor', author);
-    this.setState({ isOpen: false });
 
     if (this.props.onClose) {
       this.props.onClose();
@@ -93,11 +92,11 @@ class ImportAuthorSelectAuthor extends Component {
       isFetching,
       isQueued,
       isExistingAuthor,
+      isOpen,
       error
     } = this.props;
 
     const {
-      isOpen,
       openAbove,
       searchTerm
     } = this.state;
@@ -245,6 +244,7 @@ ImportAuthorSelectAuthor.propTypes = {
   isFetching: PropTypes.bool.isRequired,
   isQueued: PropTypes.bool.isRequired,
   isExistingAuthor: PropTypes.bool,
+  isOpen: PropTypes.bool.isRequired,
   error: PropTypes.object,
   onInputChange: PropTypes.func.isRequired,
   onOpen: PropTypes.func,
