@@ -109,6 +109,65 @@ class LibraryImportScanConnector extends Component {
     }).request;
   };
 
+  pollForBooks = (authorId, groupFiles, maxAttempts, intervalMs) => {
+    let attempts = 0;
+
+    const poll = () => {
+      return createAjaxRequest({
+        url: `/book?authorId=${authorId}&includeAllAuthorBooks=true`,
+        method: 'GET',
+        dataType: 'json'
+      }).request.then((books) => {
+        if (books && books.length > 0) {
+          // Match each file's book by foreignEditionId or title
+          groupFiles.forEach((file) => {
+            const matchedBook = books.find((b) => {
+              if (b.editions && b.editions.length) {
+                return b.editions.some((e) => e.foreignEditionId === file.foreignEditionId);
+              }
+
+              return false;
+            });
+
+            if (matchedBook) {
+              file.bookId = matchedBook.id;
+            } else {
+              // Fallback: match by title
+              const titleMatch = books.find((b) =>
+                b.title && file.book && b.title.toLowerCase() === file.book.title.toLowerCase()
+              );
+
+              if (titleMatch) {
+                file.bookId = titleMatch.id;
+              }
+            }
+          });
+
+          // Check if all files have bookIds
+          const allMatched = groupFiles.every((f) => f.bookId > 0);
+
+          if (allMatched || attempts >= maxAttempts) {
+            return;
+          }
+        }
+
+        attempts++;
+
+        if (attempts >= maxAttempts) {
+          console.warn(`Gave up waiting for books after ${maxAttempts} attempts for author ${authorId}`);
+          return;
+        }
+
+        // Wait and retry
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(poll()), intervalMs);
+        });
+      });
+    };
+
+    return poll();
+  };
+
   onImportPress = (files) => {
     const { rootFolderPath } = this.props;
 
@@ -139,46 +198,13 @@ class LibraryImportScanConnector extends Component {
 
       addPromises.push(
         promise.then((addedAuthor) => {
-          // After adding author, fetch their books to find matching book IDs
-          return createAjaxRequest({
-            url: `/author/${addedAuthor.id}`,
-            method: 'GET',
-            dataType: 'json'
-          }).request.then((fullAuthor) => {
-            // Also fetch the author's books
-            return createAjaxRequest({
-              url: `/book?authorId=${addedAuthor.id}`,
-              method: 'GET',
-              dataType: 'json'
-            }).request.then((books) => {
-              // Match each file's book by foreignEditionId or title
-              groupFiles.forEach((file) => {
-                file.authorId = addedAuthor.id;
-
-                // Try to match by foreignEditionId
-                const matchedBook = books.find((b) => {
-                  if (b.editions && b.editions.length) {
-                    return b.editions.some((e) => e.foreignEditionId === file.foreignEditionId);
-                  }
-
-                  return false;
-                });
-
-                if (matchedBook) {
-                  file.bookId = matchedBook.id;
-                } else {
-                  // Fallback: match by title
-                  const titleMatch = books.find((b) =>
-                    b.title && file.book && b.title.toLowerCase() === file.book.title.toLowerCase()
-                  );
-
-                  if (titleMatch) {
-                    file.bookId = titleMatch.id;
-                  }
-                }
-              });
-            });
+          // Set authorId immediately
+          groupFiles.forEach((file) => {
+            file.authorId = addedAuthor.id;
           });
+
+          // Poll for books — the RefreshAuthor task runs async after adding
+          return this.pollForBooks(addedAuthor.id, groupFiles, 30, 3000);
         })
       );
     });
