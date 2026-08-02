@@ -58,11 +58,8 @@
 }
 
 .results {
-  position: absolute;
-  z-index: 30;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
+  z-index: 9999;
   max-height: 250px;
   overflow-y: auto;
   background-color: #fff !important;
@@ -74,9 +71,6 @@
 
 .resultsAbove {
   composes: results;
-
-  top: auto;
-  bottom: 100%;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
 }
 

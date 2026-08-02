@@ -23,6 +23,7 @@ class ImportAuthorSelectAuthor extends Component {
 
     this._searchTimeout = null;
     this._containerRef = React.createRef();
+    this._searchRowRef = React.createRef();
   }
 
   componentDidUpdate(prevProps) {
@@ -179,9 +180,25 @@ class ImportAuthorSelectAuthor extends Component {
     // Open state rendering — search input + results list
     const resultsClass = openAbove ? styles.resultsAbove : styles.results;
 
+    // Compute fixed position for dropdown
+    const dropdownStyle = {};
+
+    if (this._searchRowRef.current) {
+      const rect = this._searchRowRef.current.getBoundingClientRect();
+
+      dropdownStyle.left = rect.left;
+      dropdownStyle.width = rect.width;
+
+      if (openAbove) {
+        dropdownStyle.bottom = window.innerHeight - rect.top;
+      } else {
+        dropdownStyle.top = rect.bottom;
+      }
+    }
+
     return (
       <div className={styles.container} ref={this._containerRef}>
-        <div className={styles.searchRow}>
+        <div className={styles.searchRow} ref={this._searchRowRef}>
           <TextInput
             className={styles.searchInput}
             name="authorSearch"
@@ -197,7 +214,7 @@ class ImportAuthorSelectAuthor extends Component {
           </button>
         </div>
 
-        <div className={resultsClass}>
+        <div className={resultsClass} style={dropdownStyle}>
           {
             isFetching ?
               <div className={styles.resultItem}>
