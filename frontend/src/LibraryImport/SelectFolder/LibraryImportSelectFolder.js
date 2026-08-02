@@ -22,7 +22,7 @@ class LibraryImportSelectFolder extends Component {
     } = this.props;
 
     return (
-      <PageContent title="Library Import">
+      <PageContent title="Import Library">
         <PageContentBody>
           {
             isFetching && !isPopulated ?
@@ -42,17 +42,17 @@ class LibraryImportSelectFolder extends Component {
             !error && isPopulated &&
               <div>
                 <div className={styles.header}>
-                  Import books that are already organized on disk
+                  Import authors you already have
                 </div>
 
                 <div className={styles.tips}>
                   Tips:
                   <ul>
                     <li className={styles.tip}>
-                      Point Bookshelf at a root folder containing your existing book files
+                      Each subfolder under a root folder should be named after an author
                     </li>
                     <li className={styles.tip}>
-                      Bookshelf will scan for book files, identify them using metadata, and add them to your library
+                      Bookshelf will look up each folder name and let you confirm or correct the match before importing
                     </li>
                     <li className={styles.tip}>
                       Files will not be moved or copied — they stay where they are
@@ -62,29 +62,44 @@ class LibraryImportSelectFolder extends Component {
 
                 {
                   items.length ?
-                    <div className={styles.rootFolders}>
-                      {
-                        items.map((rootFolder) => {
-                          return (
-                            <div
-                              key={rootFolder.id}
-                              className={styles.rootFolder}
-                              onClick={() => onRootFolderPress(rootFolder.id)}
-                            >
-                              <div className={styles.rootFolderPath}>
-                                {rootFolder.path}
-                              </div>
-                              <div className={styles.rootFolderInfo}>
-                                {rootFolder.freeSpace != null ?
-                                  `${formatBytes(rootFolder.freeSpace)} free` :
-                                  ''
-                                }
-                              </div>
-                            </div>
-                          );
-                        })
-                      }
-                    </div> :
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th className={styles.tableHeader}>Path</th>
+                          <th className={styles.tableHeader}>Free Space</th>
+                          <th className={styles.tableHeader}>Unmapped Folders</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {
+                          items.map((rootFolder) => {
+                            const unmappedCount = rootFolder.unmappedFolders ?
+                              rootFolder.unmappedFolders.length : 0;
+
+                            return (
+                              <tr
+                                key={rootFolder.id}
+                                className={styles.tableRow}
+                                onClick={() => onRootFolderPress(rootFolder.id)}
+                              >
+                                <td className={styles.path}>
+                                  {rootFolder.path}
+                                </td>
+                                <td className={styles.freeSpace}>
+                                  {rootFolder.freeSpace != null ?
+                                    formatBytes(rootFolder.freeSpace) :
+                                    ''
+                                  }
+                                </td>
+                                <td className={styles.unmappedFolders}>
+                                  {unmappedCount}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        }
+                      </tbody>
+                    </table> :
                     <Alert kind={kinds.WARNING}>
                       No root folders have been configured. Add root folders in Settings &gt; Media Management first.
                     </Alert>

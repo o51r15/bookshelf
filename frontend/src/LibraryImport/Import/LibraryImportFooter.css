@@ -1,0 +1,28 @@
+.footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: var(--tableBackgroundColor);
+  border-top: 1px solid var(--borderColor);
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.lookingUp {
+  font-size: 13px;
+  color: var(--themeLightColor);
+  font-style: italic;
+}
+
+.importButton {
+  min-width: 160px;
+}

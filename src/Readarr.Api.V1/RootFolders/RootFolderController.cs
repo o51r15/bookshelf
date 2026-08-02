@@ -137,7 +137,7 @@ namespace Readarr.Api.V1.RootFolders
         [HttpGet]
         public List<RootFolderResource> GetRootFolders()
         {
-            return _rootFolderService.AllWithSpaceStats().ToResource();
+            return _rootFolderService.AllWithUnmappedFolders().ToResource();
         }
 
         [RestDeleteById]

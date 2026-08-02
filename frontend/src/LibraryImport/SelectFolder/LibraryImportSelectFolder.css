@@ -14,39 +14,49 @@
   margin-top: 5px;
 }
 
-.rootFolders {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+.table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.rootFolder {
-  composes: card from '~Components/Card.css';
+.tableHeader {
+  text-align: left;
+  padding: 10px 15px;
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--themeLightColor);
+  border-bottom: 1px solid var(--borderColor);
+}
 
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 300px;
-  min-height: 80px;
-  padding: 15px;
+.tableRow {
   cursor: pointer;
-  text-decoration: none;
-  color: inherit;
   transition: background-color 200ms;
 }
 
-.rootFolder:hover {
+.tableRow:hover {
   background-color: var(--tableRowHoverBackgroundColor);
 }
 
-.rootFolderPath {
-  font-size: 16px;
+.tableCell {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--borderColor);
+}
+
+.path {
+  composes: tableCell;
   font-weight: 500;
   word-break: break-all;
 }
 
-.rootFolderInfo {
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--themeLightColor);
+.freeSpace {
+  composes: tableCell;
+  width: 150px;
+  white-space: nowrap;
+}
+
+.unmappedFolders {
+  composes: tableCell;
+  width: 160px;
+  white-space: nowrap;
 }

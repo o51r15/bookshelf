@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
 import Switch from 'Components/Router/Switch';
 import LibraryImportSelectFolderConnector from './SelectFolder/LibraryImportSelectFolderConnector';
-import LibraryImportScanConnector from './Scan/LibraryImportScanConnector';
+import LibraryImportTableConnector from './Import/LibraryImportTableConnector';
 
 class LibraryImport extends Component {
 
@@ -20,7 +20,7 @@ class LibraryImport extends Component {
 
         <Route
           path="/import/:rootFolderId"
-          component={LibraryImportScanConnector}
+          component={LibraryImportTableConnector}
         />
       </Switch>
     );

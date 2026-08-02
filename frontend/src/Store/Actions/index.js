@@ -15,6 +15,7 @@ import * as commands from './commandActions';
 import * as customFilters from './customFilterActions';
 import * as editions from './editionActions';
 import * as history from './historyActions';
+import * as importAuthor from './importAuthorActions';
 import * as interactiveImportActions from './interactiveImportActions';
 import * as oAuth from './oAuthActions';
 import * as organizePreview from './organizePreviewActions';
@@ -48,6 +49,7 @@ export default [
   customFilters,
   editions,
   history,
+  importAuthor,
   interactiveImportActions,
   oAuth,
   organizePreview,

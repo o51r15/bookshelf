@@ -7,6 +7,7 @@ using NLog;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore.Events;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Commands;
@@ -20,6 +21,7 @@ namespace NzbDrone.Core.RootFolders
     {
         List<RootFolder> All();
         List<RootFolder> AllWithSpaceStats();
+        List<RootFolder> AllWithUnmappedFolders();
         RootFolder Add(RootFolder rootFolder);
         RootFolder Update(RootFolder rootFolder);
         void Remove(int id);
@@ -35,16 +37,19 @@ namespace NzbDrone.Core.RootFolders
         private readonly IRootFolderRepository _rootFolderRepository;
         private readonly IDiskProvider _diskProvider;
         private readonly IManageCommandQueue _commandQueueManager;
+        private readonly IAuthorService _authorService;
         private readonly Logger _logger;
 
         public RootFolderService(IRootFolderRepository rootFolderRepository,
                                  IDiskProvider diskProvider,
                                  IManageCommandQueue commandQueueManager,
+                                 IAuthorService authorService,
                                  Logger logger)
         {
             _rootFolderRepository = rootFolderRepository;
             _diskProvider = diskProvider;
             _commandQueueManager = commandQueueManager;
+            _authorService = authorService;
             _logger = logger;
         }
 
@@ -73,6 +78,45 @@ namespace NzbDrone.Core.RootFolders
                 catch (Exception ex)
                 {
                     _logger.Error(ex, "Unable to get free space and unmapped folders for root folder {0}", folder.Path);
+                }
+            });
+
+            return rootFolders;
+        }
+
+        public List<RootFolder> AllWithUnmappedFolders()
+        {
+            var rootFolders = AllWithSpaceStats();
+
+            var authorPaths = _authorService.AllAuthorPaths()
+                .Values
+                .Select(p => p.GetCleanPath().ToLowerInvariant())
+                .ToHashSet();
+
+            rootFolders.ForEach(folder =>
+            {
+                try
+                {
+                    if (folder.Accessible && _diskProvider.FolderExists(folder.Path))
+                    {
+                        var subfolders = _diskProvider.GetDirectories(folder.Path);
+
+                        folder.UnmappedFolders = subfolders
+                            .Where(d => !authorPaths.Contains(d.GetCleanPath().ToLowerInvariant()))
+                            .Select(d => new UnmappedFolder
+                            {
+                                Name = new DirectoryInfo(d).Name,
+                                Path = d,
+                                RelativePath = folder.Path.GetRelativePath(d)
+                            })
+                            .OrderBy(f => f.Name)
+                            .ToList();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Unable to get unmapped folders for root folder {0}", folder.Path);
+                    folder.UnmappedFolders = new List<UnmappedFolder>();
                 }
             });
 
