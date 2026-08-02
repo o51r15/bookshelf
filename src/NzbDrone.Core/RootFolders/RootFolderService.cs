@@ -7,7 +7,7 @@ using NLog;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
-using NzbDrone.Core.Books;
+using NzbDrone.Core.Books.Repositories;
 using NzbDrone.Core.Datastore.Events;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Commands;
@@ -37,19 +37,19 @@ namespace NzbDrone.Core.RootFolders
         private readonly IRootFolderRepository _rootFolderRepository;
         private readonly IDiskProvider _diskProvider;
         private readonly IManageCommandQueue _commandQueueManager;
-        private readonly IAuthorService _authorService;
+        private readonly IAuthorRepository _authorRepository;
         private readonly Logger _logger;
 
         public RootFolderService(IRootFolderRepository rootFolderRepository,
                                  IDiskProvider diskProvider,
                                  IManageCommandQueue commandQueueManager,
-                                 IAuthorService authorService,
+                                 IAuthorRepository authorRepository,
                                  Logger logger)
         {
             _rootFolderRepository = rootFolderRepository;
             _diskProvider = diskProvider;
             _commandQueueManager = commandQueueManager;
-            _authorService = authorService;
+            _authorRepository = authorRepository;
             _logger = logger;
         }
 
@@ -88,7 +88,7 @@ namespace NzbDrone.Core.RootFolders
         {
             var rootFolders = AllWithSpaceStats();
 
-            var authorPaths = _authorService.AllAuthorPaths()
+            var authorPaths = _authorRepository.AllAuthorPaths()
                 .Values
                 .Select(p => p.GetCleanPath().ToLowerInvariant())
                 .ToHashSet();
