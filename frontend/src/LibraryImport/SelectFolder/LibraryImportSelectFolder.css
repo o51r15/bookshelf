@@ -1,0 +1,52 @@
+.header {
+  margin-bottom: 10px;
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.tips {
+  margin-bottom: 30px;
+  font-size: 14px;
+  color: var(--themeDarkColor);
+}
+
+.tip {
+  margin-top: 5px;
+}
+
+.rootFolders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.rootFolder {
+  composes: card from '~Components/Card.css';
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 300px;
+  min-height: 80px;
+  padding: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 200ms;
+}
+
+.rootFolder:hover {
+  background-color: var(--tableRowHoverBackgroundColor);
+}
+
+.rootFolderPath {
+  font-size: 16px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.rootFolderInfo {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--themeLightColor);
+}
