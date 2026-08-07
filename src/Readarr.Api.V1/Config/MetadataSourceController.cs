@@ -28,7 +28,8 @@ namespace Readarr.Api.V1.Config
         [HttpGet]
         public List<MetadataSourceResource> GetAll()
         {
-            var configs = _configService.GetMetadataProviderConfigs();
+            // Use the service method which auto-discovers new providers
+            var configs = _providerService.GetProviderConfigs();
             var available = _providers.ToList();
 
             return configs.Select(c =>
